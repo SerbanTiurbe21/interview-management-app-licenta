@@ -83,7 +83,6 @@ export class RegisterComponent implements OnDestroy {
       console.log(JSON.stringify(user));
       this.authService
         .register(user)
-        .pipe()
         .pipe(takeUntil(this.unsubscribe$))
         .subscribe({
           next: (response) => {
