@@ -92,7 +92,9 @@ export class RegisterComponent implements OnDestroy {
               summary: 'Success',
               detail: 'Register successfully',
             });
-            this.router.navigate(['/login']);
+            setTimeout(() => {
+              this.router.navigate(['/login']);
+            }, 2000);
           },
           error: (error) => {
             let detail = 'Something went wrong';
