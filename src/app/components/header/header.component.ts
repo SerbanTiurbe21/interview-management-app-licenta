@@ -39,32 +39,21 @@ export class HeaderComponent implements OnInit, OnDestroy {
   setupMenu(user: StoredUser | null): void {
     this.items = [
       {
-        label: 'File',
-        items: [
-          {
-            label: 'New',
-            icon: 'pi pi-fw pi-plus',
-            items: [{ label: 'Project' }, { label: 'Other' }],
-          },
-          { label: 'Open' },
-          { separator: true },
-          { label: 'Quit' },
-        ],
-      },
-      {
-        label: 'Profile',
-        icon: 'pi pi-fw pi-user',
-        items: [
-          { label: 'Delete', icon: 'pi pi-fw pi-trash' },
-          { label: 'Refresh', icon: 'pi pi-fw pi-refresh' },
-        ],
-      },
-      {
         label: 'Home',
         icon: 'pi pi-fw pi-home',
         command: () => {
           this.router.navigate(['/home']);
         },
+      },
+      {
+        label: 'Profile',
+        icon: 'pi pi-fw pi-user',
+        items: [
+          { label: 'Verify Email', icon: 'pi pi-check-circle' },
+          { label: 'Delete', icon: 'pi pi-fw pi-trash' },
+          { label: 'Forgot Password', icon: 'pi pi-fw pi-refresh' },
+          { label: 'Update Password', icon: 'pi pi-fw pi-pencil' },
+        ],
       },
       {
         label: 'Theme',
