@@ -5,5 +5,6 @@ export interface StoredUser {
   lastName: string;
   email: string;
   token: string;
+  refreshToken?: string;
   tokenExpiration: number;
 }
