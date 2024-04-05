@@ -15,7 +15,7 @@ export class AuthService {
   private keycloakBaseUrl: string =
     'http://localhost:9090/realms/springboot-microservice-realm/protocol/openid-connect';
   private client_id: string = 'microservice-auth';
-  private activeUser = new BehaviorSubject<StoredUser | null>(null);
+  activeUser = new BehaviorSubject<StoredUser | null>(null);
   private tokenExpiretimer: any;
 
   constructor(private http: HttpClient, private router: Router) {

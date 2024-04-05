@@ -14,6 +14,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { ToastModule } from 'primeng/toast';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
+import { MenubarModule } from 'primeng/menubar';
+import { HeaderComponent } from './components/header/header.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +23,7 @@ import { MessageService } from 'primeng/api';
     LoginComponent,
     RegisterComponent,
     HomeComponent,
+    HeaderComponent,
   ],
   imports: [
     BrowserModule,
@@ -32,6 +35,7 @@ import { MessageService } from 'primeng/api';
     HttpClientModule,
     ToastModule,
     BrowserAnimationsModule,
+    MenubarModule,
   ],
   providers: [MessageService],
   bootstrap: [AppComponent],

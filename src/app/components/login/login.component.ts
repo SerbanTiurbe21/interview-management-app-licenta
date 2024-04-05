@@ -66,7 +66,7 @@ export class LoginComponent implements OnDestroy {
             );
             setTimeout(() => {
               this.router.navigate(['/home']);
-            }, 2000);
+            }, 500);
           },
           error: (error) => {
             console.error('Error occurred:', error);
