@@ -48,12 +48,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
       {
         label: 'Profile',
         icon: 'pi pi-fw pi-user',
-        items: [
-          { label: 'Verify Email', icon: 'pi pi-check-circle' },
-          { label: 'Delete', icon: 'pi pi-fw pi-trash' },
-          { label: 'Forgot Password', icon: 'pi pi-fw pi-refresh' },
-          { label: 'Update Password', icon: 'pi pi-fw pi-pencil' },
-        ],
+        command: () => {
+          this.router.navigate(['/profile']);
+        },
       },
       {
         label: 'Theme',
@@ -86,6 +83,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
               this.router.navigate(['/login']);
             },
           },
+      {
+        label: 'Register',
+        icon: 'pi pi-fw pi-user-plus',
+        command: () => {
+          this.router.navigate(['/register']);
+        },
+      },
     ];
   }
 }

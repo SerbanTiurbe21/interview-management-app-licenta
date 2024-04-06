@@ -1,0 +1,88 @@
+<div class="surface-ground px-4 py-8 md:px-6 lg:px-8">
+  <div class="p-fluid flex flex-column lg:flex-row">
+    <div class="surface-card p-5 shadow-2 border-round flex-auto">
+      <div class="text-900 font-semibold text-lg mt-3">Profile</div>
+      <p-divider class="p-element"
+        ><div
+          role="separator"
+          class="p-divider p-component p-divider-horizontal p-divider-solid p-divider-left"
+        >
+          <div class="p-divider-content"></div></div
+      ></p-divider>
+      <div class="flex gap-5 flex-column-reverse md:flex-row">
+        <div class="flex-auto p-fluid">
+          <div class="mb-4">
+            <label for="email" class="block font-medium text-900 mb-2"
+              >Name</label
+            ><input
+              id="email"
+              type="text"
+              pinputtext=""
+              class="p-inputtext p-component p-element"
+            />
+          </div>
+          <div class="mb-4">
+            <label for="bio" class="block font-medium text-900 mb-2">Bio</label
+            ><textarea
+              id="bio"
+              type="text"
+              pinputtextarea=""
+              rows="5"
+              class="p-inputtextarea p-inputtext p-component p-element p-inputtextarea-resizable"
+              style="height: 121px; overflow: hidden"
+            ></textarea>
+          </div>
+          <div class="mb-4">
+            <label for="website" class="block font-medium text-900 mb-2"
+              >URL</label
+            >
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon">https://</span
+              ><input
+                id="website"
+                type="text"
+                pinputtext=""
+                class="p-inputtext p-component p-element"
+              />
+            </div>
+          </div>
+          <div class="mb-4">
+            <label for="state" class="block font-medium text-900 mb-2"
+              >Company</label
+            ><input
+              id="state"
+              type="text"
+              pinputtext=""
+              class="p-inputtext p-component p-element"
+            />
+          </div>
+          <div>
+            <button
+              pbutton=""
+              pripple=""
+              label="Update Profile"
+              class="p-element p-ripple w-auto p-button p-component"
+            >
+              <span class="p-button-label">Update Profile</span
+              ><span class="p-ink"></span>
+            </button>
+          </div>
+        </div>
+        <!-- <div class="flex flex-column align-items-center flex-or">
+          <span class="font-medium text-900 mb-2">Profile Picture</span
+          ><img
+            src="assets/images/blocks/avatars/circle-big/avatar-f-2.png"
+            class="h-10rem w-10rem"
+          /><button
+            pbutton=""
+            type="button"
+            icon="pi pi-pencil"
+            class="p-element p-button-rounded -mt-4 p-button p-component p-button-icon-only"
+          >
+            <span class="p-button-icon pi pi-pencil" aria-hidden="true"></span>
+          </button>
+        </div> -->
+      </div>
+    </div>
+  </div>
+</div>

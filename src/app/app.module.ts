@@ -16,6 +16,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MessageService } from 'primeng/api';
 import { MenubarModule } from 'primeng/menubar';
 import { HeaderComponent } from './components/header/header.component';
+import { UserprofileComponent } from './components/userprofile/userprofile.component';
+import { DividerModule } from 'primeng/divider';
 
 @NgModule({
   declarations: [
@@ -24,6 +26,7 @@ import { HeaderComponent } from './components/header/header.component';
     RegisterComponent,
     HomeComponent,
     HeaderComponent,
+    UserprofileComponent,
   ],
   imports: [
     BrowserModule,
@@ -36,6 +39,7 @@ import { HeaderComponent } from './components/header/header.component';
     ToastModule,
     BrowserAnimationsModule,
     MenubarModule,
+    DividerModule,
   ],
   providers: [MessageService],
   bootstrap: [AppComponent],

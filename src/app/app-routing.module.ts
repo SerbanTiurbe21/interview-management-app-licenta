@@ -4,6 +4,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { HomeComponent } from './components/home/home.component';
 import { canActivate } from './guards/auth.guard';
+import { UserprofileComponent } from './components/userprofile/userprofile.component';
 
 const routes: Routes = [
   {
@@ -17,6 +18,11 @@ const routes: Routes = [
   {
     path: 'home',
     component: HomeComponent,
+    canActivate: [canActivate],
+  },
+  {
+    path: 'profile',
+    component: UserprofileComponent,
     canActivate: [canActivate],
   },
   {
