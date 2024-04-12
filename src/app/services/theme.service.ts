@@ -16,4 +16,16 @@ export class ThemeService {
       themeLink.href = theme + '.css';
     }
   }
+
+  getActiveTheme(): string {
+    let themeLink = this.document.getElementById(
+      'app-theme'
+    ) as HTMLLinkElement;
+
+    if (themeLink) {
+      return themeLink.href;
+    }
+
+    return '';
+  }
 }

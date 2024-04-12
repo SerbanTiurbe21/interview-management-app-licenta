@@ -15,6 +15,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   items: MenuItem[] = [];
   private authSub: Subscription = new Subscription();
   private unsubscribe$ = new Subject<void>();
+  storedUser: StoredUser | null = null;
 
   constructor(
     private authService: AuthService,
@@ -27,6 +28,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
+        this.storedUser = user;
         this.setupMenu(user);
       });
   }
@@ -34,6 +36,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
+  }
+
+  toggleTheme(): void {
+    const currentTheme = this.themeService.getActiveTheme();
+    if (currentTheme && currentTheme.includes('dark')) {
+      this.themeService.switchTheme('lara-light-blue');
+    }
+    if (currentTheme && currentTheme.includes('light')) {
+      this.themeService.switchTheme('bootstrap4-dark-blue');
+    }
+    this.setupMenu(this.storedUser);
   }
 
   setupMenu(user: StoredUser | null): void {
@@ -51,26 +64,6 @@ export class HeaderComponent implements OnInit, OnDestroy {
         command: () => {
           this.router.navigate(['/profile']);
         },
-      },
-      {
-        label: 'Theme',
-        icon: 'pi pi-fw pi-palette',
-        items: [
-          {
-            label: 'Light Mode',
-            icon: 'pi pi-fw pi-sun',
-            command: () => {
-              this.themeService.switchTheme('lara-light-blue');
-            },
-          },
-          {
-            label: 'Dark Mode',
-            icon: 'pi pi-fw pi-moon',
-            command: () => {
-              this.themeService.switchTheme('bootstrap4-dark-blue');
-            },
-          },
-        ],
       },
       user
         ? {
@@ -91,5 +84,20 @@ export class HeaderComponent implements OnInit, OnDestroy {
         },
       },
     ];
+    this.items.push({
+      label:
+        this.themeService.getActiveTheme() &&
+        this.themeService.getActiveTheme().includes('light')
+          ? 'Dark Mode'
+          : 'Light Mode',
+      icon:
+        this.themeService.getActiveTheme() &&
+        this.themeService.getActiveTheme().includes('light')
+          ? 'pi pi-fw pi-moon'
+          : 'pi pi-fw pi-sun',
+      command: () => {
+        this.toggleTheme();
+      },
+    });
   }
 }
