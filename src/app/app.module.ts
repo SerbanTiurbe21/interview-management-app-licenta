@@ -19,6 +19,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { UserprofileComponent } from './components/userprofile/userprofile.component';
 import { DividerModule } from 'primeng/divider';
 import { TokeninterceptorserviceService } from './services/tokeninterceptor.service';
+import { LogginginterceptorService } from './services/logginginterceptor.service';
 
 @NgModule({
   declarations: [
@@ -47,6 +48,11 @@ import { TokeninterceptorserviceService } from './services/tokeninterceptor.serv
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokeninterceptorserviceService,
+      multi: true,
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: LogginginterceptorService,
       multi: true,
     },
   ],

@@ -6,7 +6,7 @@ import {
   HttpRequest,
 } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, first, mergeMap, take } from 'rxjs';
+import { Observable, first, mergeMap } from 'rxjs';
 import { AuthService } from './auth.service';
 import { StoredUser } from '../interfaces/user/storeduser.model';
 
