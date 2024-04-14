@@ -18,8 +18,8 @@ import { MenubarModule } from 'primeng/menubar';
 import { HeaderComponent } from './components/header/header.component';
 import { UserprofileComponent } from './components/userprofile/userprofile.component';
 import { DividerModule } from 'primeng/divider';
-import { TokeninterceptorserviceService } from './services/tokeninterceptor.service';
-import { LogginginterceptorService } from './services/logginginterceptor.service';
+import { TokeninterceptorserviceService } from './interceptors/tokeninterceptor.service';
+import { LogginginterceptorService } from './interceptors/logginginterceptor.service';
 
 @NgModule({
   declarations: [

@@ -32,10 +32,10 @@ export class UserprofileComponent implements OnInit, OnDestroy {
     this.loginForm = this.fb.group({
       email: new FormControl(),
       firstName: new FormControl({ value: '', disabled: true }),
-      lastName: new FormControl({ value: '', disabled: false }, [
-        Validators.required,
-        Validators.minLength(5),
-      ]),
+      lastName: new FormControl(
+        { value: '', disabled: false },
+        Validators.required
+      ),
       role: new FormControl({ value: '', disabled: true }),
     });
   }
