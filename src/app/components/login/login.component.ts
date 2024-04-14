@@ -3,7 +3,7 @@ import { Component, OnDestroy } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { Observable, Subject, switchMap, takeUntil } from 'rxjs';
+import { Subject, switchMap, takeUntil } from 'rxjs';
 import { AuthResponse } from 'src/app/interfaces/authresponse.model';
 import { RetrievedUser } from 'src/app/interfaces/user/retrieveduser.model';
 import { AuthService } from 'src/app/services/auth.service';
@@ -54,7 +54,6 @@ export class LoginComponent implements OnDestroy {
         )
         .subscribe({
           next: (authResponse: AuthResponse) => {
-            console.log('Authentication successful:', authResponse);
             this.msgService.add({
               severity: 'success',
               summary: 'Login successful',
@@ -69,7 +68,6 @@ export class LoginComponent implements OnDestroy {
             }, 500);
           },
           error: (error) => {
-            console.error('Error occurred:', error);
             let detail: string = 'An error occurred. Please try again later.';
             if (error instanceof HttpErrorResponse) {
               switch (error.status) {
@@ -77,7 +75,7 @@ export class LoginComponent implements OnDestroy {
                   detail = 'Invalid email or password';
                   break;
                 case 401:
-                  detail = 'Unauthorized';
+                  detail = 'You are not authorized to access this resource';
                   break;
                 case 500:
                   detail = 'An error occurred. Please try again later.';

@@ -58,32 +58,41 @@ export class HeaderComponent implements OnInit, OnDestroy {
           this.router.navigate(['/home']);
         },
       },
-      {
+    ];
+
+    if (user) {
+      this.items.push({
         label: 'Profile',
         icon: 'pi pi-fw pi-user',
         command: () => {
           this.router.navigate(['/profile']);
         },
-      },
-      user
-        ? {
-            label: 'Logout',
-            command: () => this.authService.logout(),
-          }
-        : {
-            label: 'Login',
-            command: () => {
-              this.router.navigate(['/login']);
-            },
-          },
-      {
+      });
+      this.items.push({
+        label: 'Logout',
+        icon: 'pi pi-fw pi-sign-out',
+        command: () => this.authService.logout(),
+      });
+    } else {
+      this.items.push({
+        label: 'Login',
+        icon: 'pi pi-fw pi-sign-in',
+        command: () => {
+          this.router.navigate(['/login']);
+        },
+      });
+    }
+
+    if (!user) {
+      this.items.push({
         label: 'Register',
         icon: 'pi pi-fw pi-user-plus',
         command: () => {
           this.router.navigate(['/register']);
         },
-      },
-    ];
+      });
+    }
+
     this.items.push({
       label:
         this.themeService.getActiveTheme() &&

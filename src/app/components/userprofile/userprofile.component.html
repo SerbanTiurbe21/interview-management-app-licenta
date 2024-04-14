@@ -9,80 +9,91 @@
         >
           <div class="p-divider-content"></div></div
       ></p-divider>
-      <div class="flex gap-5 flex-column-reverse md:flex-row">
-        <div class="flex-auto p-fluid">
-          <div class="mb-4">
-            <label for="email" class="block font-medium text-900 mb-2"
-              >Name</label
-            ><input
-              id="email"
-              type="text"
-              pinputtext=""
-              class="p-inputtext p-component p-element"
-            />
-          </div>
-          <div class="mb-4">
-            <label for="bio" class="block font-medium text-900 mb-2">Bio</label
-            ><textarea
-              id="bio"
-              type="text"
-              pinputtextarea=""
-              rows="5"
-              class="p-inputtextarea p-inputtext p-component p-element p-inputtextarea-resizable"
-              style="height: 121px; overflow: hidden"
-            ></textarea>
-          </div>
-          <div class="mb-4">
-            <label for="website" class="block font-medium text-900 mb-2"
-              >URL</label
-            >
-            <div class="p-inputgroup">
-              <span class="p-inputgroup-addon">https://</span
-              ><input
-                id="website"
+      <form [formGroup]="loginForm" (ngSubmit)="updateUser()">
+        <div class="flex gap-5 flex-column-reverse md:flex-row">
+          <div class="flex-auto p-fluid">
+            <div class="mb-4">
+              <label for="email" class="block font-medium text-900 mb-2"
+                >Email</label
+              >
+              <input
+                id="email"
                 type="text"
                 pinputtext=""
                 class="p-inputtext p-component p-element"
+                formControlName="email"
               />
             </div>
-          </div>
-          <div class="mb-4">
-            <label for="state" class="block font-medium text-900 mb-2"
-              >Company</label
-            ><input
-              id="state"
-              type="text"
-              pinputtext=""
-              class="p-inputtext p-component p-element"
-            />
-          </div>
-          <div>
-            <button
-              pbutton=""
-              pripple=""
-              label="Update Profile"
-              class="p-element p-ripple w-auto p-button p-component"
-            >
-              <span class="p-button-label">Update Profile</span
-              ><span class="p-ink"></span>
-            </button>
+            <div class="mb-4">
+              <label for="firstName" class="block font-medium text-900 mb-2"
+                >First Name</label
+              >
+              <input
+                type="text"
+                id="firstName"
+                pinputtext=""
+                class="p-inputtext p-component p-element"
+                formControlName="firstName"
+              />
+            </div>
+            <div class="mb-4">
+              <label for="lastName" class="block font-medium text-900 mb-2"
+                >Last Name</label
+              >
+              <input
+                type="text"
+                id="lastName"
+                pInputText
+                class="p-inputtext p-component p-element"
+                formControlName="lastName"
+              />
+              <small
+                *ngIf="
+                  loginForm.get('lastName')?.invalid &&
+                  (loginForm.get('lastName')?.dirty ||
+                    loginForm.get('lastName')?.touched)
+                "
+                class="block p-error"
+              >
+                <div *ngIf="loginForm.get('lastName')?.errors?.['required']">
+                  Last Name is required.
+                </div>
+              </small>
+            </div>
+            <div class="mb-4">
+              <label for="role" class="block font-medium text-900 mb-2"
+                >Role</label
+              ><input
+                id="role"
+                type="text"
+                pinputtext=""
+                class="p-inputtext p-component p-element"
+                value="To be implemented"
+              />
+            </div>
+            <div class="flex">
+              <button
+                pbutton=""
+                pripple=""
+                label="Change Password"
+                class="p-element p-ripple w-auto p-button p-component mr-2"
+                (click)="changePassword()"
+              >
+                <span class="p-button-label">Change Password</span>
+              </button>
+              <button
+                pbutton=""
+                pripple=""
+                label="Update Profile"
+                class="p-element p-ripple w-auto p-button p-component ml-2"
+                (click)="forgotPassword()"
+              >
+                <span class="p-button-label">Forgot Password</span>
+              </button>
+            </div>
           </div>
         </div>
-        <!-- <div class="flex flex-column align-items-center flex-or">
-          <span class="font-medium text-900 mb-2">Profile Picture</span
-          ><img
-            src="assets/images/blocks/avatars/circle-big/avatar-f-2.png"
-            class="h-10rem w-10rem"
-          /><button
-            pbutton=""
-            type="button"
-            icon="pi pi-pencil"
-            class="p-element p-button-rounded -mt-4 p-button p-component p-button-icon-only"
-          >
-            <span class="p-button-icon pi pi-pencil" aria-hidden="true"></span>
-          </button>
-        </div> -->
-      </div>
+      </form>
     </div>
   </div>
 </div>
