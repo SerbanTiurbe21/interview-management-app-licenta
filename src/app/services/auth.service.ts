@@ -12,29 +12,31 @@ import { Router } from '@angular/router';
 })
 export class AuthService {
   private url = 'http://localhost:8080/api/v1/users';
-  private keycloakBaseUrl: string =
+  private keycloakBaseUrl =
     'http://localhost:9090/realms/springboot-microservice-realm/protocol/openid-connect';
-  private client_id: string = 'microservice-auth';
+  private client_id = 'microservice-auth';
   activeUser = new BehaviorSubject<StoredUser | null>(null);
   private tokenExpiretimer: any;
+  private sessionCheckTimer: any;
 
   constructor(private http: HttpClient, private router: Router) {
     this.autoLogin();
-    this.initSessionCheck();
     this.listenToStorageEvents();
   }
 
-  private initSessionCheck(): void {
-    // Check every minute to be safe
-    setInterval(() => {
+  private scheduleSessionCheck(duration: number): void {
+    if (this.sessionCheckTimer) {
+      clearTimeout(this.sessionCheckTimer);
+    }
+    this.sessionCheckTimer = setTimeout(() => {
       this.autoLogin();
-    }, 60 * 1000); // 60 * 1000 milliseconds = 1 minute
+    }, duration - 60000); // Schedule to check 1 minute before the token expires
   }
 
   private listenToStorageEvents(): void {
     window.addEventListener('storage', (event) => {
       if (event.key === 'userData') {
-        this.autoLogin();
+        this.autoLogin(); // Re-check the session validity if local storage changes
       }
     });
   }
@@ -58,14 +60,15 @@ export class AuthService {
   handleTokenRefresh(userData: StoredUser): void {
     const expiresIn =
       new Date(userData.tokenExpiration).getTime() - new Date().getTime();
-    // Refresh if less than 1 minute left (60000 milliseconds)
     if (expiresIn < 60000) {
+      // Refresh if less than 1 minute left
       if (userData.refreshToken) {
         this.refreshAccessToken(userData.refreshToken).subscribe({
           next: (response) => {
             console.log('Token refreshed:', response);
             this.updateUserInformation(response, userData);
             this.setAutoLogout(response.expires_in * 1000);
+            this.scheduleSessionCheck(response.expires_in * 1000);
           },
           error: (error) => {
             console.error('Error refreshing token:', error);
@@ -76,6 +79,8 @@ export class AuthService {
         console.error('Refresh token is undefined.');
         this.logout();
       }
+    } else {
+      this.scheduleSessionCheck(expiresIn); // Schedule next check dynamically
     }
   }
 
@@ -101,16 +106,13 @@ export class AuthService {
     if (!userData) {
       return;
     }
-
     const expirationMs = new Date(userData.tokenExpiration).getTime();
     const nowMs = new Date().getTime();
-
     if (userData.token && expirationMs > nowMs) {
       this.activeUser.next({
         ...userData,
         tokenExpiration: expirationMs,
       });
-
       this.handleTokenRefresh(userData);
     } else {
       this.logout();
