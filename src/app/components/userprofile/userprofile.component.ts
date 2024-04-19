@@ -118,8 +118,4 @@ export class UserprofileComponent implements OnInit, OnDestroy {
   changePassword(): void {
     alert('Not implemented yet');
   }
-
-  forgotPassword(): void {
-    alert('Not implemented yet2');
-  }
 }

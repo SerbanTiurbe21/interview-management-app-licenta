@@ -19,6 +19,7 @@ export class LoginComponent implements OnDestroy {
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required],
+    rememberMe: [false],
   });
 
   constructor(
@@ -26,7 +27,18 @@ export class LoginComponent implements OnDestroy {
     private authService: AuthService,
     private router: Router,
     private msgService: MessageService
-  ) {}
+  ) {
+    this.initializeForm();
+  }
+
+  private initializeForm(): void {
+    const rememberedEmail = localStorage.getItem('rememberMe');
+    this.loginForm = this.fb.group({
+      email: [rememberedEmail || '', [Validators.required, Validators.email]],
+      password: ['', Validators.required],
+      rememberMe: [!!rememberedEmail],
+    });
+  }
 
   ngOnDestroy(): void {
     this.unsubscribe$.next();
@@ -42,7 +54,7 @@ export class LoginComponent implements OnDestroy {
 
   loginUser(): void {
     if (this.loginForm.valid) {
-      const { email, password } = this.loginForm.value;
+      const { email, password, rememberMe } = this.loginForm.value;
       this.authService
         .getUserByEmail(email as String)
         .pipe(
@@ -63,6 +75,11 @@ export class LoginComponent implements OnDestroy {
               authResponse,
               this.retrievedUser!
             );
+            if (rememberMe) {
+              localStorage.setItem('rememberMe', email!);
+            } else {
+              localStorage.removeItem('rememberMe');
+            }
             setTimeout(() => {
               this.router.navigate(['/home']);
             }, 500);
