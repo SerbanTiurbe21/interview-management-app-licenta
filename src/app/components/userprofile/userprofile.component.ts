@@ -18,9 +18,9 @@ import { UserService } from 'src/app/services/user.service';
   styleUrls: ['./userprofile.component.css'],
 })
 export class UserprofileComponent implements OnInit, OnDestroy {
-  private authSub: Subscription = new Subscription();
   loginForm: FormGroup;
   private unsubscribe$ = new Subject<void>();
+  private initialFormValues: any;
   storedUser: StoredUser | null = null;
 
   constructor(
@@ -30,7 +30,7 @@ export class UserprofileComponent implements OnInit, OnDestroy {
     private msgService: MessageService
   ) {
     this.loginForm = this.fb.group({
-      email: new FormControl(),
+      email: new FormControl({ value: '', disabled: true }),
       firstName: new FormControl({ value: '', disabled: true }),
       lastName: new FormControl(
         { value: '', disabled: false },
@@ -46,7 +46,7 @@ export class UserprofileComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.authSub = this.authService
+    this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
@@ -57,12 +57,21 @@ export class UserprofileComponent implements OnInit, OnDestroy {
           lastName: user?.lastName,
           role: 'Not implemented yet',
         });
+        this.initialFormValues = this.loginForm.value;
       });
   }
 
+  isFormChanged(): boolean {
+    return (
+      JSON.stringify(this.initialFormValues) !==
+      JSON.stringify(this.loginForm.value)
+    );
+  }
+
   updateUser(): void {
-    if (this.loginForm.valid) {
+    if (this.loginForm.valid && this.isFormChanged()) {
       const updatedLastName: string = this.loginForm.get('lastName')?.value;
+      this.authService.updateActiveUserLastName(updatedLastName);
       this.userService
         .updateUser(this.storedUser!.id, updatedLastName)
         .pipe(takeUntil(this.unsubscribe$))

@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
@@ -10,9 +10,10 @@ export class UserService {
   constructor(private http: HttpClient) {}
 
   updateUser(userId: string, lastName: string): Observable<void> {
-    return this.http.put<void>(`${this.url}/${userId}`, {
-      lastName: lastName,
-    });
+    return this.http.put<void>(
+      `${this.url}/${userId}?lastName=${lastName}`,
+      {}
+    );
   }
 
   changePassword(userId: string): Observable<void> {

@@ -22,20 +22,80 @@ export class AuthService {
     this.autoLogin();
   }
 
+  private refreshAccessToken(refreshToken: string): Observable<AuthResponse> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/x-www-form-urlencoded',
+    });
+    const body = new HttpParams()
+      .set('client_id', this.client_id)
+      .set('grant_type', 'refresh_token')
+      .set('refresh_token', refreshToken);
+
+    return this.http.post<AuthResponse>(
+      `${this.keycloakBaseUrl}/token`,
+      body.toString(),
+      { headers }
+    );
+  }
+
+  handleTokenRefresh(userData: StoredUser): void {
+    const expiresIn =
+      new Date(userData.tokenExpiration).getTime() - new Date().getTime();
+    if (expiresIn < 5000) {
+      if (userData.refreshToken) {
+        this.refreshAccessToken(userData.refreshToken).subscribe({
+          next: (response) => {
+            console.log('Token refreshed:', response);
+            this.updateUserInformation(response, userData);
+            this.setAutoLogout(response.expires_in * 1000);
+          },
+          error: (error) => {
+            console.error('Error refreshing token:', error);
+            this.logout();
+          },
+        });
+      } else {
+        console.error('Refresh token is undefined.');
+        this.logout();
+      }
+    }
+  }
+
+  updateUserInformation(
+    authResponse: AuthResponse,
+    userData: StoredUser
+  ): void {
+    const expirationDate = new Date(
+      new Date().getTime() + authResponse.expires_in * 1000
+    );
+    const updatedUser: StoredUser = {
+      ...userData,
+      token: authResponse.access_token,
+      refreshToken: authResponse.refresh_token,
+      tokenExpiration: expirationDate.getTime(),
+    };
+    localStorage.setItem('userData', JSON.stringify(updatedUser));
+    this.activeUser.next(updatedUser);
+  }
+
   autoLogin(): void {
     const userData: StoredUser | null = this.getUserFromLocalStorage();
     if (!userData) {
       return;
     }
-    const loadedUser: StoredUser = {
-      ...userData,
-      tokenExpiration: new Date(userData.tokenExpiration).getTime(),
-    };
-    if (loadedUser.token && new Date(loadedUser.tokenExpiration) > new Date()) {
-      this.activeUser.next(loadedUser);
-      this.setAutoLogout(
-        new Date(loadedUser.tokenExpiration).getTime() - new Date().getTime()
-      );
+
+    const expirationMs = new Date(userData.tokenExpiration).getTime();
+    const nowMs = new Date().getTime();
+
+    if (userData.token && expirationMs > nowMs) {
+      this.activeUser.next({
+        ...userData,
+        tokenExpiration: expirationMs,
+      });
+
+      this.handleTokenRefresh(userData);
+
+      this.setAutoLogout(expirationMs - nowMs);
     }
   }
 
@@ -56,10 +116,10 @@ export class AuthService {
   }
 
   login(email: String, password: String): Observable<AuthResponse> {
-    const headers = new HttpHeaders({
+    const headers: HttpHeaders = new HttpHeaders({
       'Content-Type': 'application/x-www-form-urlencoded',
     });
-    const body = new HttpParams()
+    const body: HttpParams = new HttpParams()
       .set('client_id', this.client_id)
       .set('username', email.toString())
       .set('password', password.toString())
@@ -109,6 +169,20 @@ export class AuthService {
 
   getActiveUser(): Observable<StoredUser | null> {
     return this.activeUser.asObservable();
+  }
+
+  updateActiveUserLastName(newLastName: string): void {
+    const currentUser = this.activeUser.getValue();
+    if (currentUser) {
+      const updatedUser: StoredUser = {
+        ...currentUser,
+        lastName: newLastName,
+      };
+
+      localStorage.setItem('userData', JSON.stringify(updatedUser));
+
+      this.activeUser.next(updatedUser);
+    }
   }
 
   isAuthenticated(): boolean {

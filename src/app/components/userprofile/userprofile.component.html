@@ -1,4 +1,4 @@
-<div class="surface-ground px-4 py-8 md:px-6 lg:px-8">
+<div class="surface-ground px-4 py-8 md:px-6 lg:px-8 h-full">
   <div class="p-fluid flex flex-column lg:flex-row">
     <div class="surface-card p-5 shadow-2 border-round flex-auto">
       <div class="text-900 font-semibold text-lg mt-3">Profile</div>
@@ -16,25 +16,17 @@
               <label for="email" class="block font-medium text-900 mb-2"
                 >Email</label
               >
-              <input
-                id="email"
-                type="text"
-                pinputtext=""
-                class="p-inputtext p-component p-element"
-                formControlName="email"
-              />
+              <div class="p-inputtext p-component p-element">
+                {{ loginForm.get("email")?.value }}
+              </div>
             </div>
             <div class="mb-4">
               <label for="firstName" class="block font-medium text-900 mb-2"
                 >First Name</label
               >
-              <input
-                type="text"
-                id="firstName"
-                pinputtext=""
-                class="p-inputtext p-component p-element"
-                formControlName="firstName"
-              />
+              <div class="p-inputtext p-component p-element">
+                {{ loginForm.get("firstName")?.value }}
+              </div>
             </div>
             <div class="mb-4">
               <label for="lastName" class="block font-medium text-900 mb-2"
@@ -63,20 +55,27 @@
             <div class="mb-4">
               <label for="role" class="block font-medium text-900 mb-2"
                 >Role</label
-              ><input
-                id="role"
-                type="text"
-                pinputtext=""
-                class="p-inputtext p-component p-element"
-                value="To be implemented"
-              />
+              >
+              <div class="p-inputtext p-component p-element">
+                {{ loginForm.get("role")?.value }}
+              </div>
             </div>
             <div class="flex">
               <button
                 pbutton=""
                 pripple=""
-                label="Change Password"
+                label="Update Profile"
                 class="p-element p-ripple w-auto p-button p-component mr-2"
+                (click)="updateUser()"
+                [disabled]="!isFormChanged() || !loginForm.valid"
+              >
+                <span class="p-button-label">Update Profile</span>
+              </button>
+              <button
+                pbutton=""
+                pripple=""
+                label="Change Password"
+                class="p-element p-ripple w-auto p-button p-component mr-2 ml-2"
                 (click)="changePassword()"
               >
                 <span class="p-button-label">Change Password</span>
@@ -97,3 +96,4 @@
     </div>
   </div>
 </div>
+<p-toast position="top-center"></p-toast>
