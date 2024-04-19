@@ -20,6 +20,7 @@ import { UserprofileComponent } from './components/userprofile/userprofile.compo
 import { DividerModule } from 'primeng/divider';
 import { TokeninterceptorserviceService } from './interceptors/tokeninterceptor.service';
 import { LogginginterceptorService } from './interceptors/logginginterceptor.service';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { LogginginterceptorService } from './interceptors/logginginterceptor.ser
     BrowserAnimationsModule,
     MenubarModule,
     DividerModule,
+    CheckboxModule,
   ],
   providers: [
     MessageService,
