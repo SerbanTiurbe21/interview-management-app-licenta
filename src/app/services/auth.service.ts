@@ -20,6 +20,23 @@ export class AuthService {
 
   constructor(private http: HttpClient, private router: Router) {
     this.autoLogin();
+    this.initSessionCheck();
+    this.listenToStorageEvents();
+  }
+
+  private initSessionCheck(): void {
+    // Check every minute to be safe
+    setInterval(() => {
+      this.autoLogin();
+    }, 60 * 1000); // 60 * 1000 milliseconds = 1 minute
+  }
+
+  private listenToStorageEvents(): void {
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'userData') {
+        this.autoLogin();
+      }
+    });
   }
 
   private refreshAccessToken(refreshToken: string): Observable<AuthResponse> {
@@ -41,7 +58,8 @@ export class AuthService {
   handleTokenRefresh(userData: StoredUser): void {
     const expiresIn =
       new Date(userData.tokenExpiration).getTime() - new Date().getTime();
-    if (expiresIn < 5000) {
+    // Refresh if less than 1 minute left (60000 milliseconds)
+    if (expiresIn < 60000) {
       if (userData.refreshToken) {
         this.refreshAccessToken(userData.refreshToken).subscribe({
           next: (response) => {
@@ -94,12 +112,15 @@ export class AuthService {
       });
 
       this.handleTokenRefresh(userData);
-
-      this.setAutoLogout(expirationMs - nowMs);
+    } else {
+      this.logout();
     }
   }
 
   setAutoLogout(duration: number): void {
+    if (this.tokenExpiretimer) {
+      clearTimeout(this.tokenExpiretimer);
+    }
     this.tokenExpiretimer = setTimeout(() => {
       this.logout();
     }, duration);
