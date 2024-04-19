@@ -23,6 +23,7 @@ export class TokeninterceptorserviceService implements HttpInterceptor {
     const bypassEndpoints: string[] = [
       'http://localhost:9090/realms/springboot-microservice-realm/protocol/openid-connect/token',
       'http://localhost:8080/api/v1/users/email',
+      'http://localhost:8080/api/v1/users/forgot-password',
     ];
 
     const isBypassed = bypassEndpoints.some((url) => req.url.includes(url));

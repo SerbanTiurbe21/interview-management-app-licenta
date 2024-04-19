@@ -1,7 +1,7 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
 import { User } from '../interfaces/user/user.model';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, takeUntil } from 'rxjs';
 import { RetrievedUser } from '../interfaces/user/retrieveduser.model';
 import { AuthResponse } from '../interfaces/authresponse.model';
 import { StoredUser } from '../interfaces/user/storeduser.model';
@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 @Injectable({
   providedIn: 'root',
 })
-export class AuthService {
+export class AuthService implements OnDestroy {
   private url = 'http://localhost:8080/api/v1/users';
   private keycloakBaseUrl =
     'http://localhost:9090/realms/springboot-microservice-realm/protocol/openid-connect';
@@ -18,10 +18,48 @@ export class AuthService {
   activeUser = new BehaviorSubject<StoredUser | null>(null);
   private tokenExpiretimer: any;
   private sessionCheckTimer: any;
+  private unsubscribe$ = new Subject<void>();
 
   constructor(private http: HttpClient, private router: Router) {
     this.autoLogin();
     this.listenToStorageEvents();
+  }
+
+  ngOnDestroy(): void {
+    this.unsubscribe$.next();
+    this.unsubscribe$.complete();
+  }
+
+  register(user: User): Observable<void> {
+    const completeUrl = `${this.url}/create-user`;
+    return this.http.post<void>(completeUrl, user);
+  }
+
+  getUserByEmail(email: String): Observable<RetrievedUser> {
+    const completeUrl = `${this.url}/email?email=${email}`;
+    return this.http.get<RetrievedUser>(completeUrl);
+  }
+
+  login(email: String, password: String): Observable<AuthResponse> {
+    const headers: HttpHeaders = new HttpHeaders({
+      'Content-Type': 'application/x-www-form-urlencoded',
+    });
+    const body: HttpParams = new HttpParams()
+      .set('client_id', this.client_id)
+      .set('username', email.toString())
+      .set('password', password.toString())
+      .set('grant_type', 'password');
+
+    return this.http.post<AuthResponse>(
+      `${this.keycloakBaseUrl}/token`,
+      body.toString(),
+      { headers }
+    );
+  }
+
+  forgotPassword(email: String): Observable<void> {
+    const completeUrl = `${this.url}/forgot-password?username=${email}`;
+    return this.http.put<void>(completeUrl, {});
   }
 
   private scheduleSessionCheck(duration: number): void {
@@ -63,18 +101,20 @@ export class AuthService {
     if (expiresIn < 60000) {
       // Refresh if less than 1 minute left
       if (userData.refreshToken) {
-        this.refreshAccessToken(userData.refreshToken).subscribe({
-          next: (response) => {
-            console.log('Token refreshed:', response);
-            this.updateUserInformation(response, userData);
-            this.setAutoLogout(response.expires_in * 1000);
-            this.scheduleSessionCheck(response.expires_in * 1000);
-          },
-          error: (error) => {
-            console.error('Error refreshing token:', error);
-            this.logout();
-          },
-        });
+        this.refreshAccessToken(userData.refreshToken)
+          .pipe(takeUntil(this.unsubscribe$))
+          .subscribe({
+            next: (response) => {
+              console.log('Token refreshed:', response);
+              this.updateUserInformation(response, userData);
+              this.setAutoLogout(response.expires_in * 1000);
+              this.scheduleSessionCheck(response.expires_in * 1000);
+            },
+            error: (error) => {
+              console.error('Error refreshing token:', error);
+              this.logout();
+            },
+          });
       } else {
         console.error('Refresh token is undefined.');
         this.logout();
@@ -126,33 +166,6 @@ export class AuthService {
     this.tokenExpiretimer = setTimeout(() => {
       this.logout();
     }, duration);
-  }
-
-  register(user: User): Observable<void> {
-    const completeUrl = `${this.url}/create-user`;
-    return this.http.post<void>(completeUrl, user);
-  }
-
-  getUserByEmail(email: String): Observable<RetrievedUser> {
-    const completeUrl = `${this.url}/email?email=${email}`;
-    return this.http.get<RetrievedUser>(completeUrl);
-  }
-
-  login(email: String, password: String): Observable<AuthResponse> {
-    const headers: HttpHeaders = new HttpHeaders({
-      'Content-Type': 'application/x-www-form-urlencoded',
-    });
-    const body: HttpParams = new HttpParams()
-      .set('client_id', this.client_id)
-      .set('username', email.toString())
-      .set('password', password.toString())
-      .set('grant_type', 'password');
-
-    return this.http.post<AuthResponse>(
-      `${this.keycloakBaseUrl}/token`,
-      body.toString(),
-      { headers }
-    );
   }
 
   storeUserInformation(

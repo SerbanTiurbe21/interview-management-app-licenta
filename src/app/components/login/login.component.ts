@@ -111,4 +111,53 @@ export class LoginComponent implements OnDestroy {
         });
     }
   }
+
+  forgotPassword(): void {
+    const email = this.loginForm.get('email')?.value;
+    if (email) {
+      this.authService
+        .forgotPassword(email)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: () => {
+            this.msgService.add({
+              severity: 'info',
+              summary: 'Reset Link Sent',
+              detail:
+                'If an account exists with the email provided, you will receive a password reset link.',
+            });
+          },
+          error: (error) => {
+            let detail: string = 'An error occurred. Please try again later.';
+            if (error instanceof HttpErrorResponse) {
+              switch (error.status) {
+                case 400:
+                  detail = 'Invalid email or password';
+                  break;
+                case 401:
+                  detail = 'You are not authorized to access this resource';
+                  break;
+                case 500:
+                  detail = 'An error occurred. Please try again later.';
+                  break;
+                default:
+                  detail = 'An error occurred. Please try again later.';
+                  break;
+              }
+            }
+            this.msgService.add({
+              severity: 'error',
+              summary: 'Login failed',
+              detail: detail,
+            });
+          },
+        });
+    } else {
+      this.msgService.add({
+        severity: 'error',
+        summary: 'Forgot password failed',
+        detail: 'Please enter your email address to reset your password.',
+      });
+    }
+  }
 }
