@@ -124,6 +124,27 @@ export class AuthService implements OnDestroy {
     }
   }
 
+  storeUserInformation(
+    authResponse: AuthResponse,
+    retrievedUser: RetrievedUser
+  ): void {
+    const expiresInDuration = authResponse.expires_in * 1000;
+    const expirationDate = new Date(new Date().getTime() + expiresInDuration);
+    const storedUser: StoredUser = {
+      id: retrievedUser.id,
+      username: retrievedUser.username,
+      firstName: retrievedUser.firstName,
+      lastName: retrievedUser.lastName,
+      email: retrievedUser.email,
+      role: retrievedUser.role || '',
+      token: authResponse.access_token,
+      refreshToken: authResponse.refresh_token,
+      tokenExpiration: expirationDate.getTime(),
+    };
+    localStorage.setItem('userData', JSON.stringify(storedUser));
+    this.activeUser.next(storedUser);
+  }
+
   updateUserInformation(
     authResponse: AuthResponse,
     userData: StoredUser
@@ -166,26 +187,6 @@ export class AuthService implements OnDestroy {
     this.tokenExpiretimer = setTimeout(() => {
       this.logout();
     }, duration);
-  }
-
-  storeUserInformation(
-    authResponse: AuthResponse,
-    retrievedUser: RetrievedUser
-  ): void {
-    const expiresInDuration = authResponse.expires_in * 1000;
-    const expirationDate = new Date(new Date().getTime() + expiresInDuration);
-    const storedUser: StoredUser = {
-      id: retrievedUser.id,
-      username: retrievedUser.username,
-      firstName: retrievedUser.firstName,
-      lastName: retrievedUser.lastName,
-      email: retrievedUser.email,
-      token: authResponse.access_token,
-      refreshToken: authResponse.refresh_token,
-      tokenExpiration: expirationDate.getTime(),
-    };
-    localStorage.setItem('userData', JSON.stringify(storedUser));
-    this.activeUser.next(storedUser);
   }
 
   logout(): void {

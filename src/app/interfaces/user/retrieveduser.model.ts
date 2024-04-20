@@ -15,4 +15,5 @@ export interface RetrievedUser {
   enabled: boolean;
   emailVerified: boolean;
   access: UserAccess;
+  role?: string;
 }
