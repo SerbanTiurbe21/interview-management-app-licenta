@@ -1,11 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, switchMap, takeUntil } from 'rxjs';
+import { Role } from 'src/app/interfaces/role.model';
+import { RetrievedUser } from 'src/app/interfaces/user/retrieveduser.model';
 import { User } from 'src/app/interfaces/user/user.model';
 import { AuthService } from 'src/app/services/auth.service';
+import { RoleService } from 'src/app/services/role.service';
 import { passwordMatchValidator } from 'src/app/shared/password-match.directive';
 
 @Component({
@@ -15,11 +18,18 @@ import { passwordMatchValidator } from 'src/app/shared/password-match.directive'
 })
 export class RegisterComponent implements OnDestroy {
   private unsubscribe$ = new Subject<void>();
+
+  roles: Role[] = [
+    { name: 'HR', key: 'H' },
+    { name: 'DEVELOPER', key: 'D' },
+  ];
+
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private messageService: MessageService,
-    private router: Router
+    private router: Router,
+    private roleService: RoleService
   ) {}
 
   ngOnDestroy(): void {
@@ -31,7 +41,10 @@ export class RegisterComponent implements OnDestroy {
     {
       fullName: [
         '',
-        [Validators.required, Validators.pattern(/^[a-zA-Z]+(?: [a-zA-Z]+)*$/)],
+        [
+          Validators.required,
+          Validators.pattern(/^[a-zA-Z]+ [a-zA-Z]+(-[a-zA-Z]+)?$/),
+        ],
       ],
       email: ['', [Validators.required, Validators.email]],
       password: [
@@ -44,6 +57,7 @@ export class RegisterComponent implements OnDestroy {
         ],
       ],
       confirmPassword: ['', Validators.required],
+      selectedRole: new FormControl(),
     },
     {
       validators: passwordMatchValidator,
@@ -69,8 +83,9 @@ export class RegisterComponent implements OnDestroy {
   submitDetails(): void {
     if (this.registerForm.valid) {
       const { fullName, email, password } = this.registerForm.value;
-      let [lastName, ...firstNameArr] = fullName!.split(' ');
-      let firstName = firstNameArr.join(' ') || 'DefaultLastName';
+      const selectedRole: Role = this.registerForm.get('selectedRole')?.value;
+      let [firstName, ...lastNameArr] = fullName!.split(' ');
+      let lastName = lastNameArr.join(' ') || 'DefaultLastName';
 
       const user: User = {
         username: email,
@@ -83,13 +98,25 @@ export class RegisterComponent implements OnDestroy {
       console.log(JSON.stringify(user));
       this.authService
         .register(user)
-        .pipe(takeUntil(this.unsubscribe$))
+        .pipe(
+          takeUntil(this.unsubscribe$),
+          switchMap(() => {
+            return this.authService.getUserByEmail(email as string);
+          }),
+          switchMap((retrievedUser: RetrievedUser) => {
+            return this.roleService.assignRole(
+              retrievedUser.id,
+              selectedRole.name
+            );
+          })
+        )
         .subscribe({
-          next: (response) => {
+          next: () => {
             this.messageService.add({
               severity: 'success',
-              summary: 'Success',
-              detail: 'User registered successfully',
+              summary: 'Registration Successful',
+              detail:
+                'Please check your email to confirm your account before logging in.',
             });
             setTimeout(() => {
               this.router.navigate(['/login']);

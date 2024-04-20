@@ -21,6 +21,8 @@ import { DividerModule } from 'primeng/divider';
 import { TokeninterceptorserviceService } from './interceptors/tokeninterceptor.service';
 import { LogginginterceptorService } from './interceptors/logginginterceptor.service';
 import { CheckboxModule } from 'primeng/checkbox';
+import { RadioButtonModule } from 'primeng/radiobutton';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   declarations: [
@@ -44,6 +46,8 @@ import { CheckboxModule } from 'primeng/checkbox';
     MenubarModule,
     DividerModule,
     CheckboxModule,
+    RadioButtonModule,
+    FormsModule,
   ],
   providers: [
     MessageService,

@@ -30,9 +30,9 @@ export class AuthService implements OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  register(user: User): Observable<void> {
+  register(user: User): Observable<User> {
     const completeUrl = `${this.url}/create-user`;
-    return this.http.post<void>(completeUrl, user);
+    return this.http.post<User>(completeUrl, user);
   }
 
   getUserByEmail(email: String): Observable<RetrievedUser> {
