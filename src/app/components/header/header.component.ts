@@ -68,6 +68,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           this.router.navigate(['/profile']);
         },
       });
+      this.addThemeItem();
       this.items.push({
         label: 'Logout',
         icon: 'pi pi-fw pi-sign-out',
@@ -91,22 +92,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
           this.router.navigate(['/register']);
         },
       });
+      this.addThemeItem();
     }
+  }
+
+  private addThemeItem(): void {
+    const activeTheme = this.themeService.getActiveTheme();
+    const isLightMode = activeTheme && activeTheme.includes('light');
 
     this.items.push({
-      label:
-        this.themeService.getActiveTheme() &&
-        this.themeService.getActiveTheme().includes('light')
-          ? 'Dark Mode'
-          : 'Light Mode',
-      icon:
-        this.themeService.getActiveTheme() &&
-        this.themeService.getActiveTheme().includes('light')
-          ? 'pi pi-fw pi-moon'
-          : 'pi pi-fw pi-sun',
-      command: () => {
-        this.toggleTheme();
-      },
+      label: isLightMode ? 'Dark Mode' : 'Light Mode',
+      icon: isLightMode ? 'pi pi-fw pi-moon' : 'pi pi-fw pi-sun',
+      command: () => this.toggleTheme(),
     });
   }
 }
