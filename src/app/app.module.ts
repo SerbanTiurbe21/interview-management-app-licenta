@@ -13,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { ToastModule } from 'primeng/toast';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MessageService } from 'primeng/api';
+import { ConfirmationService, MessageService } from 'primeng/api';
 import { MenubarModule } from 'primeng/menubar';
 import { HeaderComponent } from './components/header/header.component';
 import { UserprofileComponent } from './components/userprofile/userprofile.component';
@@ -23,6 +23,12 @@ import { LogginginterceptorService } from './interceptors/logginginterceptor.ser
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { FormsModule } from '@angular/forms';
+import { QuestionsComponent } from './components/questions/questions.component';
+import { TableModule } from 'primeng/table';
+import { DialogModule } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ListboxModule } from 'primeng/listbox';
+import { ToolbarModule } from 'primeng/toolbar';
 
 @NgModule({
   declarations: [
@@ -32,6 +38,7 @@ import { FormsModule } from '@angular/forms';
     HomeComponent,
     HeaderComponent,
     UserprofileComponent,
+    QuestionsComponent,
   ],
   imports: [
     BrowserModule,
@@ -48,9 +55,15 @@ import { FormsModule } from '@angular/forms';
     CheckboxModule,
     RadioButtonModule,
     FormsModule,
+    TableModule,
+    DialogModule,
+    ConfirmDialogModule,
+    ListboxModule,
+    ToolbarModule,
   ],
   providers: [
     MessageService,
+    ConfirmationService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokeninterceptorserviceService,
