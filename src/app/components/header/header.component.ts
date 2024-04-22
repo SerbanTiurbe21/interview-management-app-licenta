@@ -74,10 +74,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
               },
             },
             {
-              label: 'Questions',
+              label: 'Topics and Questions',
               icon: 'pi pi-fw pi-question',
               command: () => {
-                this.router.navigate(['/questions']);
+                this.router.navigate(['/topics']);
               },
             },
           ],

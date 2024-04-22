@@ -5,7 +5,7 @@ import { RegisterComponent } from './components/register/register.component';
 import { HomeComponent } from './components/home/home.component';
 import { canActivate } from './guards/auth.guard';
 import { UserprofileComponent } from './components/userprofile/userprofile.component';
-import { QuestionsComponent } from './components/questions/questions.component';
+import { QuestionsComponent } from './components/topics/questions.component';
 
 const routes: Routes = [
   {
@@ -27,7 +27,7 @@ const routes: Routes = [
     canActivate: [canActivate],
   },
   {
-    path: 'questions',
+    path: 'topics',
     component: QuestionsComponent,
     canActivate: [canActivate],
   },

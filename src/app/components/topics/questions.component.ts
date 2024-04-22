@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ConfirmationService, MessageService } from 'primeng/api';
+import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
 import { Question } from 'src/app/interfaces/question.model';
 import { Topic } from 'src/app/interfaces/topic.model';
-import { QuestionsService } from 'src/app/services/questions.service';
 import { TopicService } from 'src/app/services/topic.service';
 
 @Component({
@@ -22,10 +21,8 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   isQuestionDialogVisible: boolean = false;
 
   constructor(
-    private confirmationService: ConfirmationService,
     private messageService: MessageService,
-    private topicService: TopicService,
-    private questionService: QuestionsService
+    private topicService: TopicService
   ) {}
 
   ngOnDestroy(): void {
@@ -44,29 +41,6 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       .subscribe((topics) => {
         this.topics = topics;
       });
-  }
-
-  onTopicChange() {
-    // Load questions for the selected topic
-  }
-
-  editQuestion(question: Question) {
-    this.currentQuestion = { ...question };
-    this.isQuestionDialogVisible = true;
-  }
-
-  saveQuestion() {
-    // Save the question via the API
-    this.isQuestionDialogVisible = false;
-  }
-
-  confirmDelete(question: Question) {
-    this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this question?',
-      accept: () => {
-        // Delete the question
-      },
-    });
   }
 
   showAddTopicDialog() {
@@ -98,5 +72,10 @@ export class QuestionsComponent implements OnInit, OnDestroy {
 
   clearNewTopic() {
     this.newTopicName = '';
+  }
+
+  manageQuestions(topic: Topic) {
+    this.selectedTopic = topic;
+    console.log('Manage questions for topic:', JSON);
   }
 }

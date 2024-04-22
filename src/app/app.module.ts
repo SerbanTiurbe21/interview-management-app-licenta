@@ -23,7 +23,7 @@ import { LogginginterceptorService } from './interceptors/logginginterceptor.ser
 import { CheckboxModule } from 'primeng/checkbox';
 import { RadioButtonModule } from 'primeng/radiobutton';
 import { FormsModule } from '@angular/forms';
-import { QuestionsComponent } from './components/questions/questions.component';
+import { QuestionsComponent } from './components/topics/questions.component';
 import { TableModule } from 'primeng/table';
 import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';

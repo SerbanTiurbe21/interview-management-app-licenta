@@ -19,18 +19,28 @@
     [value]="topics"
     [paginator]="true"
     [rows]="5"
-    [rowsPerPageOptions]="[5, 10, 20]"
+    [rowsPerPageOptions]="[5, 10, 15]"
   >
     <ng-template pTemplate="header">
       <tr>
-        <th>Topic</th>
-        <th>Number Of Questions</th>
+        <th class="text-center w-4">Topic</th>
+        <th class="text-center w-4">Number Of Questions</th>
+        <th class="text-center w-4">See/Add Questions</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-topic>
       <tr>
-        <td>{{ topic.name }}</td>
-        <td>{{ topic.nrOfQuestions }}</td>
+        <td class="text-center">{{ topic.name }}</td>
+        <td class="text-center">{{ topic.nrOfQuestions }}</td>
+        <td class="text-center">
+          <p-button
+            icon="pi pi-eye"
+            [rounded]="true"
+            [text]="true"
+            (click)="manageQuestions(topic)"
+          >
+          </p-button>
+        </td>
       </tr>
     </ng-template>
   </p-table>
