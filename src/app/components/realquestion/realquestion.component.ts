@@ -72,7 +72,6 @@ export class RealquestionComponent implements OnInit, OnDestroy {
       answer: this.questionAnswer,
       topics: [this.selectedTopic!],
     };
-    console.log(JSON.stringify(addedQuestion));
     this.questionService
       .addQuestion(addedQuestion)
       .pipe(takeUntil(this.unsubscribe$))
@@ -206,5 +205,11 @@ export class RealquestionComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     this.router.navigate(['/topics']);
+  }
+
+  clearAddQuestionDialog(): void {
+    this.newQuestionName = '';
+    this.questionAnswer = '';
+    this.displayAddQuestionDialog = false;
   }
 }
