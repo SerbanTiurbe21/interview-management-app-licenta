@@ -31,6 +31,7 @@ import { ListboxModule } from 'primeng/listbox';
 import { ToolbarModule } from 'primeng/toolbar';
 import { RealquestionComponent } from './components/realquestion/realquestion.component';
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
+import { CandidatesComponent } from './components/candidates/candidates.component';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.co
     QuestionsComponent,
     RealquestionComponent,
     PagenotfoundComponent,
+    CandidatesComponent,
   ],
   imports: [
     BrowserModule,

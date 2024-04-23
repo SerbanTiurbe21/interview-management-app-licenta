@@ -8,6 +8,7 @@ import { UserprofileComponent } from './components/userprofile/userprofile.compo
 import { QuestionsComponent } from './components/topics/questions.component';
 import { RealquestionComponent } from './components/realquestion/realquestion.component';
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
+import { CandidatesComponent } from './components/candidates/candidates.component';
 
 const routes: Routes = [
   {
@@ -36,6 +37,11 @@ const routes: Routes = [
   {
     path: 'topic/questions/:topicId',
     component: RealquestionComponent,
+    canActivate: [canActivate],
+  },
+  {
+    path: 'candidates',
+    component: CandidatesComponent,
     canActivate: [canActivate],
   },
   // {

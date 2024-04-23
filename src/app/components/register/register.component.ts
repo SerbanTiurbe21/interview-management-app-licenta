@@ -95,7 +95,6 @@ export class RegisterComponent implements OnDestroy {
         password: password!,
       };
 
-      console.log(JSON.stringify(user));
       this.authService
         .register(user)
         .pipe(
