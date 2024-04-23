@@ -29,6 +29,8 @@ import { DialogModule } from 'primeng/dialog';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ListboxModule } from 'primeng/listbox';
 import { ToolbarModule } from 'primeng/toolbar';
+import { RealquestionComponent } from './components/realquestion/realquestion.component';
+import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
 
 @NgModule({
   declarations: [
@@ -39,6 +41,8 @@ import { ToolbarModule } from 'primeng/toolbar';
     HeaderComponent,
     UserprofileComponent,
     QuestionsComponent,
+    RealquestionComponent,
+    PagenotfoundComponent,
   ],
   imports: [
     BrowserModule,

@@ -6,6 +6,8 @@ import { HomeComponent } from './components/home/home.component';
 import { canActivate } from './guards/auth.guard';
 import { UserprofileComponent } from './components/userprofile/userprofile.component';
 import { QuestionsComponent } from './components/topics/questions.component';
+import { RealquestionComponent } from './components/realquestion/realquestion.component';
+import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
 
 const routes: Routes = [
   {
@@ -32,9 +34,18 @@ const routes: Routes = [
     canActivate: [canActivate],
   },
   {
-    path: '', // or '**' for 404 page
-    redirectTo: 'home',
-    pathMatch: 'full',
+    path: 'topic/questions/:topicId',
+    component: RealquestionComponent,
+    canActivate: [canActivate],
+  },
+  // {
+  //   path: '', // or '**' for 404 page
+  //   redirectTo: 'home',
+  //   pathMatch: 'full',
+  // },
+  {
+    path: '**',
+    component: PagenotfoundComponent,
   },
 ];
 

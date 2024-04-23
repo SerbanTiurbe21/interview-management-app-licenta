@@ -1,7 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
-import { Question } from 'src/app/interfaces/question.model';
 import { Topic } from 'src/app/interfaces/topic.model';
 import { TopicService } from 'src/app/services/topic.service';
 
@@ -14,15 +15,14 @@ export class QuestionsComponent implements OnInit, OnDestroy {
   private unsubscribe$ = new Subject<void>();
   displayAddTopicDialog: boolean = false;
   newTopicName: string = '';
-  questions: Question[] = [];
   topics: Topic[] = [];
   selectedTopic: Topic | null = null;
-  currentQuestion: Question | null = null;
   isQuestionDialogVisible: boolean = false;
 
   constructor(
     private messageService: MessageService,
-    private topicService: TopicService
+    private topicService: TopicService,
+    private router: Router
   ) {}
 
   ngOnDestroy(): void {
@@ -30,11 +30,11 @@ export class QuestionsComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadTopics();
   }
 
-  loadTopics() {
+  loadTopics(): void {
     this.topicService
       .displayTopics()
       .pipe(takeUntil(this.unsubscribe$))
@@ -43,11 +43,11 @@ export class QuestionsComponent implements OnInit, OnDestroy {
       });
   }
 
-  showAddTopicDialog() {
+  showAddTopicDialog(): void {
     this.displayAddTopicDialog = true;
   }
 
-  saveNewTopic() {
+  saveNewTopic(): void {
     this.displayAddTopicDialog = false;
     const addedTopic: Topic = {
       name: this.newTopicName,
@@ -65,17 +65,40 @@ export class QuestionsComponent implements OnInit, OnDestroy {
           console.log('Topic added successfully');
           this.loadTopics();
         },
-        error: () => {},
+        error: (error) => {
+          let detail: string = 'An error occurred. Please try again later.';
+          if (error instanceof HttpErrorResponse) {
+            switch (error.status) {
+              case 400:
+                detail = 'Invalid data. Please check the input data.';
+                break;
+              case 401:
+                detail = 'You are not authorized to perform this action.';
+                break;
+              case 403:
+                detail = 'You are forbidden from performing this action.';
+                break;
+              case 404:
+                detail = 'The resource was not found.';
+                break;
+            }
+          }
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Login failed',
+            detail: detail,
+          });
+        },
       });
     this.newTopicName = '';
   }
 
-  clearNewTopic() {
+  clearNewTopic(): void {
     this.newTopicName = '';
   }
 
-  manageQuestions(topic: Topic) {
+  manageQuestions(topic: Topic): void {
     this.selectedTopic = topic;
-    console.log('Manage questions for topic:', JSON);
+    this.router.navigate(['/topic/questions', topic.id]);
   }
 }

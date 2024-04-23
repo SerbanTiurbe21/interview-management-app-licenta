@@ -17,4 +17,8 @@ export class TopicService {
   displayTopics(): Observable<Topic[]> {
     return this.http.get<Topic[]>(this.url);
   }
+
+  getTopicById(topicId: string): Observable<Topic> {
+    return this.http.get<Topic>(`${this.url}/${topicId}`);
+  }
 }

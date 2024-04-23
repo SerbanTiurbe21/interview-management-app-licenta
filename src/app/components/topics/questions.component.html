@@ -76,6 +76,7 @@
             icon="pi pi-check"
             (click)="saveNewTopic()"
             class="p-button-sm mr-2"
+            [disabled]="newTopicName === ''"
           ></button>
         </div>
         <div class="p-field p-col-6 ml-2">
@@ -92,3 +93,4 @@
     </div>
   </div>
 </p-dialog>
+<p-toast position="top-center"></p-toast>
