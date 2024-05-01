@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
   FormBuilder,
@@ -6,11 +5,14 @@ import {
   FormGroup,
   Validators,
 } from '@angular/forms';
-import { MessageService } from 'primeng/api';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject, takeUntil } from 'rxjs';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { AuthService } from 'src/app/services/auth.service';
+import { GeneralinformationComponent } from '../generalinformation/generalinformation.component';
 import { UserService } from 'src/app/services/user.service';
+import { MessageService } from 'primeng/api';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-userprofile',
@@ -20,23 +22,20 @@ import { UserService } from 'src/app/services/user.service';
 export class UserprofileComponent implements OnInit, OnDestroy {
   loginForm: FormGroup;
   private unsubscribe$ = new Subject<void>();
-  private initialFormValues: any;
-  storedUser: StoredUser | null = null;
+  userData: StoredUser | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private dialogService: DialogService,
     private userService: UserService,
-    private msgService: MessageService
+    private messageService: MessageService
   ) {
     this.loginForm = this.fb.group({
-      email: new FormControl({ value: '', disabled: true }),
-      firstName: new FormControl({ value: '', disabled: true }),
-      lastName: new FormControl(
-        { value: '', disabled: false },
-        Validators.required
-      ),
-      role: new FormControl({ value: '', disabled: true }),
+      email: new FormControl(''),
+      firstName: new FormControl('', Validators.required),
+      lastName: new FormControl('', Validators.required),
+      role: new FormControl(''),
     });
   }
 
@@ -50,72 +49,70 @@ export class UserprofileComponent implements OnInit, OnDestroy {
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
-        this.storedUser = user;
+        this.userData = user;
         this.loginForm.patchValue({
           email: user?.email,
           firstName: user?.firstName,
           lastName: user?.lastName,
-          role: 'Not implemented yet',
+          role: user?.role,
         });
-        this.initialFormValues = this.loginForm.value;
       });
   }
 
-  isFormChanged(): boolean {
-    return (
-      JSON.stringify(this.initialFormValues) !==
-      JSON.stringify(this.loginForm.value)
-    );
-  }
-
-  updateUser(): void {
-    if (this.loginForm.valid && this.isFormChanged()) {
-      const updatedLastName: string = this.loginForm.get('lastName')?.value;
-      this.authService.updateActiveUserLastName(updatedLastName);
-      this.userService
-        .updateUser(this.storedUser!.id, updatedLastName)
-        .pipe(takeUntil(this.unsubscribe$))
-        .subscribe({
-          next: () => {
-            this.msgService.add({
-              severity: 'success',
-              summary: 'User updated',
-              detail: 'User updated successfully',
-            });
-          },
-          error: (error: HttpErrorResponse) => {
-            let detail: string = 'An error occurred. Please try again later.';
-            if (error instanceof HttpErrorResponse) {
-              switch (error.status) {
-                case 400:
-                  detail = 'Invalid first name or last name';
-                  break;
-                case 401:
-                  detail = 'You are not authorized to access this resource';
-                  break;
-                case 405:
-                  detail = 'Method not allowed';
-                  break;
-                case 500:
-                  detail = 'An error occurred. Please try again later.';
-                  break;
-                default:
-                  detail = 'An error occurred. Please try again later.';
-                  break;
-              }
-            }
-            this.msgService.add({
-              severity: 'error',
-              summary: 'Login failed',
-              detail: detail,
-            });
-          },
-          complete: () => {},
-        });
-    }
-  }
-
   changePassword(): void {
-    alert('Not implemented yet');
+    const ref: DynamicDialogRef = this.dialogService.open(
+      GeneralinformationComponent,
+      {
+        header: 'Change Password',
+        width: '20%',
+        data: {
+          message:
+            'You will receive a link in your email to change your password!',
+        },
+      }
+    );
+
+    ref.onClose.pipe(takeUntil(this.unsubscribe$)).subscribe((result) => {
+      console.log('Dialog closed with result:', result);
+      if (this.userData?.id) {
+        this.userService
+          .changePassword(this.userData?.id)
+          .pipe(takeUntil(this.unsubscribe$))
+          .subscribe({
+            next: () => {
+              console.log('Password reset email sent!');
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Password reset email sent!',
+              });
+            },
+            error: (error) => {
+              let detail: string = 'An error occurred. Please try again later.';
+              if (error instanceof HttpErrorResponse) {
+                switch (error.status) {
+                  case 400:
+                    detail = 'Invalid data. Please check the input data.';
+                    break;
+                  case 401:
+                    detail = 'You are not authorized to perform this action.';
+                    break;
+                  case 403:
+                    detail = 'You are forbidden from performing this action.';
+                    break;
+                  case 404:
+                    detail = 'The resource was not found.';
+                    break;
+                }
+              }
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Login failed',
+                detail: detail,
+              });
+            },
+          });
+      }
+    });
   }
 }

@@ -4,6 +4,7 @@ import { MenuItem } from 'primeng/api';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { AuthService } from 'src/app/services/auth.service';
+import { RoleService } from 'src/app/services/role.service';
 import { ThemeService } from 'src/app/services/theme.service';
 
 @Component({
@@ -13,18 +14,18 @@ import { ThemeService } from 'src/app/services/theme.service';
 })
 export class HeaderComponent implements OnInit, OnDestroy {
   items: MenuItem[] = [];
-  private authSub: Subscription = new Subscription();
   private unsubscribe$ = new Subject<void>();
   storedUser: StoredUser | null = null;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private roleService: RoleService
   ) {}
 
   ngOnInit(): void {
-    this.authSub = this.authService
+    this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
@@ -61,35 +62,34 @@ export class HeaderComponent implements OnInit, OnDestroy {
     ];
 
     if (user) {
-      this.items.push(
-        {
-          label: 'Interview Management',
-          icon: 'pi pi-fw pi-briefcase',
-          items: [
-            {
-              label: 'Candidates',
-              icon: 'pi pi-fw pi-user',
-              command: () => {
-                this.router.navigate(['/candidates']);
-              },
+      this.items.push({
+        label: 'Interview Management',
+        icon: 'pi pi-fw pi-briefcase',
+        items: [
+          {
+            label: 'Candidates',
+            icon: 'pi pi-fw pi-user',
+            command: () => {
+              this.router.navigate(['/candidates']);
             },
-            {
-              label: 'Topics and Questions',
-              icon: 'pi pi-fw pi-question',
-              command: () => {
-                this.router.navigate(['/topics']);
-              },
-            },
-          ],
-        },
-        {
-          label: 'Profile',
-          icon: 'pi pi-fw pi-user',
-          command: () => {
-            this.router.navigate(['/profile']);
           },
-        }
-      );
+          {
+            label: 'Topics and Questions',
+            icon: 'pi pi-fw pi-question',
+            command: () => {
+              this.router.navigate(['/topics']);
+            },
+          },
+        ],
+      });
+      this.addUserManagementItem();
+      this.items.push({
+        label: 'Profile',
+        icon: 'pi pi-fw pi-user',
+        command: () => {
+          this.router.navigate(['/profile']);
+        },
+      });
       this.addThemeItem();
       this.items.push({
         label: 'Logout',
@@ -127,5 +127,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
       icon: isLightMode ? 'pi pi-fw pi-moon' : 'pi pi-fw pi-sun',
       command: () => this.toggleTheme(),
     });
+  }
+
+  private addUserManagementItem(): void {
+    if (this.roleService.isAdmin() || this.roleService.isHR()) {
+      this.items.push({
+        label: 'User Management',
+        icon: 'pi pi-fw pi-users',
+        command: () => {
+          this.router.navigate(['/users']);
+        },
+      });
+    }
   }
 }

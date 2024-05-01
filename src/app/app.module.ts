@@ -32,6 +32,15 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { RealquestionComponent } from './components/realquestion/realquestion.component';
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
 import { CandidatesComponent } from './components/candidates/candidates.component';
+import { DropdownModule } from 'primeng/dropdown';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
+import { AutoCompleteModule } from 'primeng/autocomplete';
+import { DynamicDialogModule } from 'primeng/dynamicdialog';
+import { AddpositionComponent } from './components/addposition/addposition.component';
+import { DialogService } from 'primeng/dynamicdialog';
+import { UsermanagementComponent } from './components/usermanagement/usermanagement.component';
+import { GeneralinformationComponent } from './components/generalinformation/generalinformation.component';
+import { CalendarModule } from 'primeng/calendar';
 
 @NgModule({
   declarations: [
@@ -45,6 +54,9 @@ import { CandidatesComponent } from './components/candidates/candidates.componen
     RealquestionComponent,
     PagenotfoundComponent,
     CandidatesComponent,
+    AddpositionComponent,
+    UsermanagementComponent,
+    GeneralinformationComponent,
   ],
   imports: [
     BrowserModule,
@@ -66,10 +78,16 @@ import { CandidatesComponent } from './components/candidates/candidates.componen
     ConfirmDialogModule,
     ListboxModule,
     ToolbarModule,
+    DropdownModule,
+    OverlayPanelModule,
+    AutoCompleteModule,
+    DynamicDialogModule,
+    CalendarModule,
   ],
   providers: [
     MessageService,
     ConfirmationService,
+    DialogService,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: TokeninterceptorserviceService,

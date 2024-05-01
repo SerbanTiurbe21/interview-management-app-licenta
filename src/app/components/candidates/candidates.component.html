@@ -3,7 +3,7 @@
     <div class="p-toolbar-group-left">
       <h1>Candidates</h1>
     </div>
-    <div class="p-toolbar-group-right" *ngIf="isUserHR()">
+    <div class="p-toolbar-group-right" *ngIf="isUserAdminOrHr()">
       <button
         pButton
         type="button"
@@ -17,7 +17,7 @@
 
 <p-table
   class="mt-3"
-  [value]="candidates"
+  [value]="filteredCandidates"
   [paginator]="true"
   [rows]="5"
   [rowsPerPageOptions]="[5, 10]"
@@ -27,10 +27,30 @@
       <th class="text-center">Name</th>
       <th class="text-center">Email</th>
       <th class="text-center">Phone Number</th>
-      <th class="text-center">Position</th>
+      <th class="text-center">
+        <div class="flex p-ai-center h-full align-items-center">
+          <span class="flex-1 text-center">Position</span>
+          <p-button
+            icon="pi pi-filter"
+            class="p-button-text p-button-rounded p-ml-2"
+            (click)="positionFilterDropdown.toggle($event)"
+            [text]="true"
+          ></p-button>
+          <p-overlayPanel #positionFilterDropdown [dismissable]="true">
+            <p-dropdown
+              [options]="uniquePositions"
+              (onChange)="onPositionFilter($event.value)"
+              placeholder="Filter by position"
+              [showClear]="true"
+              appendTo="body"
+            >
+            </p-dropdown>
+          </p-overlayPanel>
+        </div>
+      </th>
       <th class="text-center">CV Link</th>
       <th class="text-center">Interview Date</th>
-      <th class="text-center">Actions</th>
+      <th class="text-center" *ngIf="isUserAdminOrHr()">Actions</th>
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-candidate>
@@ -38,30 +58,254 @@
       <td class="text-center">{{ candidate.name }}</td>
       <td class="text-center">{{ candidate.email }}</td>
       <td class="text-center">{{ candidate.phoneNumber }}</td>
-      <td class="text-center">{{ candidate.position }}</td>
+      <td class="text-center">
+        {{ getPositionNameById(candidate.positionId) }}
+      </td>
       <td class="text-center">
         <a [href]="candidate.cvLink" target="_blank">CV Link</a>
       </td>
-      <td class="text-center">{{ candidate.interviewDate }}</td>
-      <td class="text-center" *ngIf="isUserHR()">
+      <td class="text-center">
+        {{ candidate.interviewDate | date : "mediumDate" }}
+      </td>
+      <td class="text-center" *ngIf="isUserAdminOrHr()">
         <p-button
           icon="pi pi-pencil"
           [rounded]="true"
           [text]="true"
           (click)="editCandidate(candidate)"
-        >
-        </p-button>
+        ></p-button>
         <p-button
           icon="pi pi-trash"
           [rounded]="true"
           [text]="true"
           (click)="confirmDeleteCandidate(candidate)"
-        >
-        </p-button>
+        ></p-button>
       </td>
     </tr>
   </ng-template>
 </p-table>
+
+<p-dialog
+  #addCandidateDialog
+  header="Add Candidate"
+  [(visible)]="displayAddCandidateDialog"
+  [modal]="true"
+  [style]="{ width: '40vw', height: 'auto' }"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="1000"
+  (onHide)="addCandidateForm.reset()"
+  class="add-candidate-dialog"
+>
+  <form [formGroup]="addCandidateForm" class="p-fluid">
+    <div class="grid">
+      <div class="field col-12 md:col-6">
+        <label for="name">Name</label>
+        <input
+          formControlName="name"
+          type="text"
+          id="name"
+          pInputText
+          placeholder="Enter a name eg. John Doe"
+        />
+        <small
+          *ngIf="
+            addCandidateForm.get('name')?.invalid &&
+            (addCandidateForm.get('name')?.dirty ||
+              addCandidateForm.get('name')?.touched)
+          "
+          class="block p-error"
+        >
+          <div *ngIf="addCandidateForm.get('name')?.errors?.['required']">
+            Name is required.
+          </div>
+        </small>
+      </div>
+      <div class="field col-12 md:col-6">
+        <label for="email">Email</label>
+        <input
+          formControlName="email"
+          type="email"
+          id="email"
+          pInputText
+          placeholder="Enter a valid email"
+        />
+        <small
+          *ngIf="
+            addCandidateForm.get('email')?.invalid &&
+            (addCandidateForm.get('email')?.dirty ||
+              addCandidateForm.get('email')?.touched)
+          "
+          class="block p-error"
+        >
+          <div *ngIf="addCandidateForm.get('email')?.errors?.['required']">
+            Email is required.
+          </div>
+          <div *ngIf="addCandidateForm.get('email')?.errors?.['email']">
+            Enter a valid email.
+          </div>
+        </small>
+      </div>
+      <div class="field col-12 md:col-6">
+        <label for="phoneNumber">Phone Number</label>
+        <input
+          formControlName="phoneNumber"
+          type="text"
+          id="phoneNumber"
+          pInputText
+          placeholder="07xx-xxx-xxx or 07xx xxx xxx"
+        />
+        <small
+          *ngIf="
+            addCandidateForm.get('phoneNumber')?.invalid &&
+            (addCandidateForm.get('phoneNumber')?.dirty ||
+              addCandidateForm.get('phoneNumber')?.touched)
+          "
+          class="block p-error"
+        >
+          <div
+            *ngIf="addCandidateForm.get('phoneNumber')?.errors?.['required']"
+          >
+            Phone number is required.
+          </div>
+          <div *ngIf="addCandidateForm.get('phoneNumber')?.errors?.['pattern']">
+            Enter a valid phone number.
+          </div>
+        </small>
+      </div>
+      <div class="field col-12 md:col-6">
+        <label for="cvLink">CV Link</label>
+        <input
+          formControlName="cvLink"
+          type="text"
+          id="cvLink"
+          pInputText
+          placeholder="http:// or https://"
+        />
+        <small
+          *ngIf="
+            addCandidateForm.get('cvLink')?.invalid &&
+            (addCandidateForm.get('cvLink')?.dirty ||
+              addCandidateForm.get('cvLink')?.touched)
+          "
+          class="block p-error"
+        >
+          <div *ngIf="addCandidateForm.get('cvLink')?.errors?.['required']">
+            CV link is required.
+          </div>
+          <div *ngIf="addCandidateForm.get('cvLink')?.errors?.['pattern']">
+            Enter a valid URL. (http:// or https://)
+          </div>
+        </small>
+      </div>
+      <div class="field col-12 md:col-6">
+        <label for="interviewDate">Interview Date</label>
+        <p-calendar
+          formControlName="interviewDate"
+          inputId="interviewDate"
+          [showIcon]="true"
+          dataType="string"
+          [dateFormat]="'yy-mm-dd'"
+          [minDate]="today!!"
+          appendTo="body"
+        >
+        </p-calendar>
+        <small
+          *ngIf="
+            addCandidateForm.get('interviewDate')?.invalid &&
+            (addCandidateForm.get('interviewDate')?.dirty ||
+              addCandidateForm.get('interviewDate')?.touched)
+          "
+          class="block p-error"
+        >
+          <div
+            *ngIf="addCandidateForm.get('interviewDate')?.errors?.['required']"
+          >
+            Interview date is required.
+          </div>
+          <div
+            *ngIf="addCandidateForm.get('interviewDate')?.errors?.['pattern']"
+          >
+            Enter a valid date. (yyyy-mm-dd)
+          </div>
+        </small>
+      </div>
+      <div class="field col-12 md:col-6">
+        <label for="assignedTo">Assigned To</label>
+        <p-autoComplete
+          [suggestions]="filteredDevelopers"
+          (completeMethod)="filterDevelopers($event)"
+          formControlName="assignedTo"
+          field="fullName"
+          [dropdown]="true"
+          placeholder="Select a developer"
+          [forceSelection]="true"
+          [appendTo]="'body'"
+          (onSelect)="onDeveloperSelect($event)"
+        >
+          <ng-template let-developer pTemplate="item">
+            <div *ngIf="developer.id; else noDeveloperTemplate">
+              {{ developer.fullName }}
+            </div>
+            <ng-template #noDeveloperTemplate>
+              <div style="color: gray">{{ developer.fullName }}</div>
+            </ng-template>
+          </ng-template>
+        </p-autoComplete>
+        <small
+          *ngIf="
+            addCandidateForm.get('assignedTo')?.invalid &&
+            (addCandidateForm.get('assignedTo')?.dirty ||
+              addCandidateForm.get('assignedTo')?.touched)
+          "
+          class="block p-error"
+        >
+          <div *ngIf="addCandidateForm.get('assignedTo')?.errors?.['required']">
+            Assigned to is required.
+          </div>
+        </small>
+      </div>
+      <div class="field col-12">
+        <label for="position">Position</label>
+        <p-autoComplete
+          [suggestions]="filteredPositions"
+          (completeMethod)="filterPosition($event)"
+          formControlName="position"
+          field="name"
+          [dropdown]="true"
+          placeholder="Select or add a position"
+          class="mb-3"
+          [appendTo]="'body'"
+          (onSelect)="onPositionSelect($event)"
+        >
+        </p-autoComplete>
+        <small
+          *ngIf="
+            addCandidateForm.get('position')?.invalid &&
+            (addCandidateForm.get('position')?.dirty ||
+              addCandidateForm.get('position')?.touched)
+          "
+          class="block p-error"
+        >
+          <div *ngIf="addCandidateForm.get('position')?.errors?.['required']">
+            Position is required.
+          </div>
+        </small>
+      </div>
+    </div>
+    <div class="flex justify-content-center">
+      <button
+        type="button"
+        pButton
+        label="Add Candidate"
+        icon="pi pi-check"
+        (click)="saveNewCandidate()"
+        class="p-button-sm p-mt-3"
+        [disabled]="addCandidateForm.invalid"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
 
 <p-toast position="top-center"></p-toast>
 <p-confirmDialog></p-confirmDialog>

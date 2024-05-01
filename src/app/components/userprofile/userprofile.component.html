@@ -9,7 +9,7 @@
         >
           <div class="p-divider-content"></div></div
       ></p-divider>
-      <form [formGroup]="loginForm" (ngSubmit)="updateUser()">
+      <form [formGroup]="loginForm">
         <div class="flex gap-5 flex-column-reverse md:flex-row">
           <div class="flex-auto p-fluid">
             <div class="mb-4">
@@ -24,21 +24,53 @@
               <label for="firstName" class="block font-medium text-900 mb-2"
                 >First Name</label
               >
-              <div class="p-inputtext p-component p-element">
+              <input
+                id="firstName"
+                type="text"
+                class="p-inputtext p-component p-element"
+                formControlName="firstName"
+                *ngIf="!(userData?.role !== 'admin')"
+              />
+              <div
+                class="p-inputtext p-component p-element"
+                *ngIf="
+                  userData?.role === 'HR' || userData?.role === 'DEVELOPER'
+                "
+              >
                 {{ loginForm.get("firstName")?.value }}
               </div>
+              <small
+                *ngIf="
+                  loginForm.get('firstName')?.invalid &&
+                  (loginForm.get('firstName')?.dirty ||
+                    loginForm.get('firstName')?.touched)
+                "
+                class="block p-error"
+              >
+                <div *ngIf="loginForm.get('firstName')?.errors?.['required']">
+                  Last Name is required.
+                </div>
+              </small>
             </div>
             <div class="mb-4">
               <label for="lastName" class="block font-medium text-900 mb-2"
                 >Last Name</label
               >
               <input
-                type="text"
                 id="lastName"
-                pInputText
+                type="text"
                 class="p-inputtext p-component p-element"
                 formControlName="lastName"
+                *ngIf="!(userData?.role !== 'admin')"
               />
+              <div
+                class="p-inputtext p-component p-element"
+                *ngIf="
+                  userData?.role === 'HR' || userData?.role === 'DEVELOPER'
+                "
+              >
+                {{ loginForm.get("lastName")?.value }}
+              </div>
               <small
                 *ngIf="
                   loginForm.get('lastName')?.invalid &&
@@ -61,16 +93,6 @@
               </div>
             </div>
             <div class="flex">
-              <button
-                pbutton=""
-                pripple=""
-                label="Update Profile"
-                class="p-element p-ripple w-auto p-button p-component mr-2"
-                (click)="updateUser()"
-                [disabled]="!isFormChanged() || !loginForm.valid"
-              >
-                <span class="p-button-label">Update Profile</span>
-              </button>
               <button
                 pbutton=""
                 pripple=""
