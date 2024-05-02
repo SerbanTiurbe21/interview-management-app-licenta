@@ -36,7 +36,6 @@ import { DropdownModule } from 'primeng/dropdown';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { DynamicDialogModule } from 'primeng/dynamicdialog';
-import { AddpositionComponent } from './components/addposition/addposition.component';
 import { DialogService } from 'primeng/dynamicdialog';
 import { UsermanagementComponent } from './components/usermanagement/usermanagement.component';
 import { GeneralinformationComponent } from './components/generalinformation/generalinformation.component';
@@ -54,7 +53,6 @@ import { CalendarModule } from 'primeng/calendar';
     RealquestionComponent,
     PagenotfoundComponent,
     CandidatesComponent,
-    AddpositionComponent,
     UsermanagementComponent,
     GeneralinformationComponent,
   ],

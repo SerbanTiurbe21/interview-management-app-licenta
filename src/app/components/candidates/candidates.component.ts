@@ -5,13 +5,12 @@ import {
   AutoCompleteCompleteEvent,
   AutoCompleteOnSelectEvent,
 } from 'primeng/autocomplete';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject, combineLatest, map, of, switchMap, takeUntil } from 'rxjs';
 import { Candidate } from 'src/app/interfaces/candidate.model';
 import { Position } from 'src/app/interfaces/position.model';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { CandidatesService } from 'src/app/services/candidates.service';
-import { AddpositionComponent } from '../addposition/addposition.component';
 import { AuthService } from 'src/app/services/auth.service';
 import { PositionsService } from 'src/app/services/positions.service';
 import { UserService } from 'src/app/services/user.service';
@@ -25,6 +24,7 @@ const cvLinkRegex =
   /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 const dateRegex =
   /[1-9][0-9][0-9]{2}-([0][1-9]|[1][0-2])-([1-2][0-9]|[0][1-9]|[3][0-1])/; // Matches date in YYYY-MM-DD format
+const positionNameRegex = /^(.+)\s-\s(.+)$/;
 
 @Component({
   selector: 'app-candidates',
@@ -37,6 +37,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   developers: RetrievedUser[] = [];
   today: Date | null = null;
   addCandidateForm: FormGroup = new FormGroup({});
+  addPositionForm: FormGroup = new FormGroup({});
   positions: Position[] = [];
   allPositions: Position[] = [];
   displayAddCandidateDialog: boolean = false;
@@ -54,7 +55,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   constructor(
     private candidatesService: CandidatesService,
     private fb: FormBuilder,
-    private dialogService: DialogService,
     private authService: AuthService,
     private positionsService: PositionsService,
     private userService: UserService,
@@ -66,7 +66,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.initializeForm();
+    this.initializeCandidateForm();
+    this.initializeAddPositionForm();
     this.retrieveOpenAndInProgressPositions();
     this.retrieveAllPositions();
     this.authService
@@ -84,7 +85,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     this.unsubscribe$.complete();
   }
 
-  initializeForm(): void {
+  initializeCandidateForm(): void {
     this.addCandidateForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
@@ -96,15 +97,12 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // retrieveOpenPositions(): void {
-  //   this.positionsService
-  //     .getPositionsByStatus(PositionStatus.OPEN)
-  //     .pipe(takeUntil(this.unsubscribe$))
-  //     .subscribe((positions) => {
-  //       this.positions = positions;
-  //       this.filteredPositions = positions;
-  //     });
-  // }
+  initializeAddPositionForm(): void {
+    this.addPositionForm = this.fb.group({
+      name: ['', [Validators.required, Validators.pattern(positionNameRegex)]],
+      status: [PositionStatus.OPEN, Validators.required],
+    });
+  }
 
   retrieveOpenAndInProgressPositions(): void {
     combineLatest([
@@ -409,11 +407,16 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   onPositionSelect(event: AutoCompleteOnSelectEvent): void {
     if (event.value.name === 'Add new position...') {
       this.addCandidateForm.get('position')?.reset();
-      this.addComponentDialogRef = this.dialogService.open(
-        AddpositionComponent,
-        {}
-      );
+      this.displayAddPositionDialog = true;
     }
+  }
+
+  resetAddPositionForm(): void {
+    this.addPositionForm.reset({
+      name: '',
+      status: PositionStatus.OPEN,
+    });
+    this.displayAddPositionDialog = false;
   }
 
   loadDevelopers(): void {
@@ -482,6 +485,59 @@ export class CandidatesComponent implements OnInit, OnDestroy {
       this.addCandidateForm.get('assignedTo')?.setValue(event.value.fullName);
     } else {
       this.addCandidateForm.get('assignedTo')?.reset();
+    }
+  }
+
+  addPosition(): void {
+    if (this.addPositionForm.valid) {
+      const newPosition: Position = {
+        name: this.addPositionForm.get('name')?.value,
+        status: PositionStatus.OPEN,
+      };
+
+      this.positionsService
+        .addPosition(newPosition)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Position Added',
+              detail: 'The new position was successfully added.',
+            });
+            this.retrieveOpenAndInProgressPositions();
+            this.resetAddPositionForm();
+            this.addCandidateForm.get('position')?.setValue(newPosition);
+          },
+          error: (error) => {
+            let detail = 'An error occurred. Please try again later.';
+            if (error instanceof HttpErrorResponse) {
+              console.error('Error adding candidate:', error.message);
+              switch (error.status) {
+                case 400:
+                  detail = error.error.message;
+                  break;
+                case 401:
+                  detail = 'You are not authorized to perform this action.';
+                  break;
+                case 403:
+                  detail = 'You are forbidden from performing this action.';
+                  break;
+                case 404:
+                  detail = 'The resource was not found.';
+                  break;
+                case 409:
+                  detail = 'The position already exists.';
+                  break;
+              }
+            }
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Failed to add candidate',
+              detail: detail,
+            });
+          },
+        });
     }
   }
 }
