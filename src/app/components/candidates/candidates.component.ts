@@ -253,44 +253,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // getAllCandidates(): void {
-  //   this.candidatesService
-  //     .getAllCandidates()
-  //     .pipe(
-  //       takeUntil(this.unsubscribe$),
-  //       switchMap((candidates) => {
-  //         // Store candidates information first
-  //         this.filteredCandidates = candidates;
-  //         this.candidates = candidates;
-
-  //         // Then fetch positions
-  //         return this.positionsService.getAllPositions().pipe(
-  //           takeUntil(this.unsubscribe$),
-  //           map((positions) => {
-  //             return positions
-  //               .map((pos) => ({
-  //                 label: pos.name, // human-readable name
-  //                 value: pos.id, // unique identifier
-  //               }))
-  //               .filter((option) =>
-  //                 candidates.some(
-  //                   (candidate) => candidate.positionId === option.value
-  //                 )
-  //               );
-  //           })
-  //         );
-  //       })
-  //     )
-  //     .subscribe(
-  //       (positionOptions) => {
-  //         this.uniquePositions = positionOptions;
-  //       },
-  //       (error) => {
-  //         console.error('Error fetching candidates or positions:', error);
-  //       }
-  //     );
-  // }
-
   getAllCandidates(): void {
     this.candidatesService
       .getAllCandidates()
