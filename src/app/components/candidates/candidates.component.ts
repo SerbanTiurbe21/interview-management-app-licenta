@@ -67,7 +67,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeForm();
-    this.retrieveOpenPositions();
+    this.retrieveOpenAndInProgressPositions();
     this.retrieveAllPositions();
     this.authService
       .getActiveUser()
@@ -96,13 +96,30 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
-  retrieveOpenPositions(): void {
-    this.positionsService
-      .getPositionsByStatus(PositionStatus.OPEN)
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe((positions) => {
-        this.positions = positions;
-        this.filteredPositions = positions;
+  // retrieveOpenPositions(): void {
+  //   this.positionsService
+  //     .getPositionsByStatus(PositionStatus.OPEN)
+  //     .pipe(takeUntil(this.unsubscribe$))
+  //     .subscribe((positions) => {
+  //       this.positions = positions;
+  //       this.filteredPositions = positions;
+  //     });
+  // }
+
+  retrieveOpenAndInProgressPositions(): void {
+    combineLatest([
+      this.positionsService.getPositionsByStatus(PositionStatus.OPEN),
+      this.positionsService.getPositionsByStatus(PositionStatus.IN_PROGRESS),
+    ])
+      .pipe(
+        takeUntil(this.unsubscribe$),
+        map(([openPositions, inProgressPositions]) => {
+          return [...openPositions, ...inProgressPositions];
+        })
+      )
+      .subscribe((combinedPositions) => {
+        this.positions = combinedPositions;
+        this.filteredPositions = combinedPositions;
       });
   }
 
@@ -236,6 +253,44 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
+  // getAllCandidates(): void {
+  //   this.candidatesService
+  //     .getAllCandidates()
+  //     .pipe(
+  //       takeUntil(this.unsubscribe$),
+  //       switchMap((candidates) => {
+  //         // Store candidates information first
+  //         this.filteredCandidates = candidates;
+  //         this.candidates = candidates;
+
+  //         // Then fetch positions
+  //         return this.positionsService.getAllPositions().pipe(
+  //           takeUntil(this.unsubscribe$),
+  //           map((positions) => {
+  //             return positions
+  //               .map((pos) => ({
+  //                 label: pos.name, // human-readable name
+  //                 value: pos.id, // unique identifier
+  //               }))
+  //               .filter((option) =>
+  //                 candidates.some(
+  //                   (candidate) => candidate.positionId === option.value
+  //                 )
+  //               );
+  //           })
+  //         );
+  //       })
+  //     )
+  //     .subscribe(
+  //       (positionOptions) => {
+  //         this.uniquePositions = positionOptions;
+  //       },
+  //       (error) => {
+  //         console.error('Error fetching candidates or positions:', error);
+  //       }
+  //     );
+  // }
+
   getAllCandidates(): void {
     this.candidatesService
       .getAllCandidates()
@@ -249,8 +304,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
           // Then fetch positions
           return this.positionsService.getAllPositions().pipe(
             takeUntil(this.unsubscribe$),
-            map((positions) => {
-              return positions
+            map((positions) =>
+              positions
                 .map((pos) => ({
                   label: pos.name, // human-readable name
                   value: pos.id, // unique identifier
@@ -259,19 +314,20 @@ export class CandidatesComponent implements OnInit, OnDestroy {
                   candidates.some(
                     (candidate) => candidate.positionId === option.value
                   )
-                );
-            })
+                )
+            )
           );
         })
       )
-      .subscribe(
-        (positionOptions) => {
+      .subscribe({
+        next: (positionOptions) => {
           this.uniquePositions = positionOptions;
         },
-        (error) => {
+        error: (error) => {
           console.error('Error fetching candidates or positions:', error);
-        }
-      );
+        },
+        complete: () => console.log('Position fetching completed'),
+      });
   }
 
   getCandidatesAssignedToDeveloper(): void {
@@ -318,7 +374,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             takeUntil(this.unsubscribe$)
           )
           .subscribe({
-            next: (candidate) => {
+            next: () => {
               this.messageService.add({
                 severity: 'success',
                 summary: 'Success',
@@ -333,9 +389,10 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             error: (error) => {
               let detail = 'An error occurred. Please try again later.';
               if (error instanceof HttpErrorResponse) {
+                console.error('Error adding candidate:', error.message);
                 switch (error.status) {
                   case 400:
-                    detail = 'Invalid data. Please check the input data.';
+                    detail = error.error.message;
                     break;
                   case 401:
                     detail = 'You are not authorized to perform this action.';
