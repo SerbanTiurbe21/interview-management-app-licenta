@@ -38,6 +38,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   today: Date | null = null;
   addCandidateForm: FormGroup = new FormGroup({});
   positions: Position[] = [];
+  allPositions: Position[] = [];
   displayAddCandidateDialog: boolean = false;
   displayAddPositionDialog: boolean = false;
   newCandidate: Candidate = this.createEmptyCandidate();
@@ -66,7 +67,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeForm();
-    this.retrievePositions();
+    this.retrieveOpenPositions();
+    this.retrieveAllPositions();
     this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
@@ -94,13 +96,22 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
-  retrievePositions(): void {
+  retrieveOpenPositions(): void {
     this.positionsService
       .getPositionsByStatus(PositionStatus.OPEN)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((positions) => {
         this.positions = positions;
         this.filteredPositions = positions;
+      });
+  }
+
+  retrieveAllPositions(): void {
+    this.positionsService
+      .getAllPositions()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((positions) => {
+        this.allPositions = positions;
       });
   }
 
@@ -316,6 +327,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
               this.displayAddCandidateDialog = false;
               this.addCandidateForm.reset();
               this.loadCandidatesBasedOnRole();
+              this.loadDevelopers();
+              this.retrieveAllPositions();
             },
             error: (error) => {
               let detail = 'An error occurred. Please try again later.';
@@ -357,8 +370,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   }
 
   getPositionNameById(id: string): string {
-    const position = this.positions.find((pos) => pos.id === id);
-    return position ? position.name : 'Unknown Position';
+    const position = this.allPositions.find((pos) => pos.id === id);
+    return position ? position.name : '';
   }
 
   filterPosition(event: AutoCompleteCompleteEvent): void {

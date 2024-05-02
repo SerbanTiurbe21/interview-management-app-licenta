@@ -13,6 +13,7 @@ import { ThemeService } from 'src/app/services/theme.service';
   styleUrls: ['./header.component.css'],
 })
 export class HeaderComponent implements OnInit, OnDestroy {
+  isAdminOrHr: boolean = false;
   items: MenuItem[] = [];
   private unsubscribe$ = new Subject<void>();
   storedUser: StoredUser | null = null;
@@ -30,6 +31,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.storedUser = user;
+        this.isAdminOrHr =
+          this.roleService.isAdmin() || this.roleService.isHR();
         this.setupMenu(user);
       });
   }
@@ -130,7 +133,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   private addUserManagementItem(): void {
-    if (this.roleService.isAdmin() || this.roleService.isHR()) {
+    if (this.isAdminOrHr) {
       this.items.push({
         label: 'User Management',
         icon: 'pi pi-fw pi-users',
