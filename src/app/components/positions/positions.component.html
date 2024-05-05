@@ -1,0 +1,130 @@
+<div>
+  <p-toolbar>
+    <div class="p-toolbar-group-left">
+      <h1>Positions</h1>
+    </div>
+    <div class="p-toolbar-group-right" *ngIf="isUserAdminOrHr()">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        label="Add Position"
+        (click)="showAddPositionDialog()"
+      ></button>
+    </div>
+  </p-toolbar>
+</div>
+
+<p-table
+  class="mt-3"
+  [value]="positions"
+  [paginator]="true"
+  [rows]="5"
+  [rowsPerPageOptions]="[5, 10]"
+>
+  <ng-template pTemplate="header">
+    <tr>
+      <th pSortableColumn="name" class="text-center w-3">
+        Position Name
+        <p-sortIcon field="name"></p-sortIcon>
+      </th>
+      <th pSortableColumn="status" class="text-center w-3">
+        Status
+        <p-sortIcon field="status"></p-sortIcon>
+      </th>
+      <th pSortableColumn="subStatus" class="text-center w-3">
+        Substatus
+        <p-sortIcon field="subStatus"></p-sortIcon>
+      </th>
+      <th class="text-center w-3" *ngIf="isUserAdminOrHr()">Actions</th>
+    </tr>
+  </ng-template>
+  <ng-template pTemplate="body" let-position>
+    <tr
+      [ngClass]="{
+        'inactive-position':
+          position.status === 'CLOSED' && position.subStatus === 'CANCELLED'
+      }"
+    >
+      <td class="text-center">{{ position.name }}</td>
+      <td class="text-center">{{ position.status }}</td>
+      <td class="text-center">{{ position.subStatus || "N/A" }}</td>
+      <td class="text-center" *ngIf="isUserAdminOrHr()">
+        <p-button
+          icon="pi pi-pencil"
+          aria-label="Edit position"
+          pTooltip="Edit position"
+          tooltipPosition="top"
+          [rounded]="true"
+          [text]="true"
+          (click)="editPosition(position)"
+        ></p-button>
+        <p-button
+          icon="pi pi-times-circle"
+          aria-label="Deactivate position"
+          pTooltip="Deactivate position"
+          tooltipPosition="top"
+          [rounded]="true"
+          [text]="true"
+          styleClass="ui-button-danger"
+          (click)="confirmDeactivatePosition(position)"
+        ></p-button>
+      </td>
+    </tr>
+  </ng-template>
+</p-table>
+
+<p-dialog
+  header="Add New Position"
+  [(visible)]="displayAddPositionDialog"
+  [modal]="true"
+  [responsive]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="1000"
+  (onHide)="resetAddPositionForm()"
+>
+  <form [formGroup]="addPositionForm" class="p-fluid">
+    <div class="p-field mb-3">
+      <label for="name">Position Name</label>
+      <input
+        id="name"
+        type="text"
+        class="mt-1"
+        pInputText
+        formControlName="name"
+        required
+        placeholder="Enter a position name eg. name - department"
+      />
+      <small
+        *ngIf="
+          addPositionForm.get('name')?.invalid &&
+          (addPositionForm.get('name')?.dirty ||
+            addPositionForm.get('name')?.touched)
+        "
+        class="p-error"
+      >
+        <div *ngIf="addPositionForm.get('name')?.errors?.['required']">
+          Position name is required.
+        </div>
+        <div *ngIf="addPositionForm.get('name')?.errors?.['pattern']">
+          Enter a valid position name. eg. name - department
+        </div>
+      </small>
+    </div>
+    <div class="flex justify-content-center">
+      <button
+        type="button"
+        pButton
+        label="Add"
+        icon="pi pi-check"
+        (click)="addPosition()"
+        [disabled]="!addPositionForm.valid"
+        class="p-button-sm p-mt-3"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-toast position="top-center"></p-toast>
+<p-confirmDialog></p-confirmDialog>

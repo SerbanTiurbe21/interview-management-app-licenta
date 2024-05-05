@@ -40,6 +40,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { UsermanagementComponent } from './components/usermanagement/usermanagement.component';
 import { GeneralinformationComponent } from './components/generalinformation/generalinformation.component';
 import { CalendarModule } from 'primeng/calendar';
+import { PositionsComponent } from './components/positions/positions.component';
 
 @NgModule({
   declarations: [
@@ -55,6 +56,7 @@ import { CalendarModule } from 'primeng/calendar';
     CandidatesComponent,
     UsermanagementComponent,
     GeneralinformationComponent,
+    PositionsComponent,
   ],
   imports: [
     BrowserModule,

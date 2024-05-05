@@ -83,9 +83,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
               this.router.navigate(['/topics']);
             },
           },
+          {
+            label: 'Positions',
+            icon: 'pi pi-fw pi-briefcase',
+            command: () => {
+              this.router.navigate(['/positions']);
+            },
+          },
         ],
       });
-      this.addUserManagementItem();
+      this.isAdminOrHr
+        ? this.items.push({
+            label: 'User Management',
+            icon: 'pi pi-fw pi-users',
+            command: () => {
+              this.router.navigate(['/users']);
+            },
+          })
+        : {};
       this.items.push({
         label: 'Profile',
         icon: 'pi pi-fw pi-user',

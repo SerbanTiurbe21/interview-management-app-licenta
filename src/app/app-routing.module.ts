@@ -10,6 +10,7 @@ import { RealquestionComponent } from './components/realquestion/realquestion.co
 import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.component';
 import { CandidatesComponent } from './components/candidates/candidates.component';
 import { UsermanagementComponent } from './components/usermanagement/usermanagement.component';
+import { PositionsComponent } from './components/positions/positions.component';
 
 const routes: Routes = [
   {
@@ -48,6 +49,11 @@ const routes: Routes = [
   {
     path: 'users',
     component: UsermanagementComponent,
+    canActivate: [canActivate],
+  },
+  {
+    path: 'positions',
+    component: PositionsComponent,
     canActivate: [canActivate],
   },
   // {

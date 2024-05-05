@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Position } from '../interfaces/position.model';
 import { Observable } from 'rxjs';
@@ -31,12 +31,23 @@ export class PositionsService {
   }
 
   // can be accessed by the HR role and the admin role
-  deletePosition(positionId: string): Observable<void> {
-    return this.http.delete<void>(`${this.url}/${positionId}`);
+  cancelPosition(positionId: string): Observable<void> {
+    return this.http.put<void>(`${this.url}/${positionId}/cancel`, null, {});
   }
 
   // can be accessed by the HR role and the admin role
   getPositionsByStatus(status: string): Observable<Position[]> {
     return this.http.get<Position[]>(`${this.url}?status=${status}`);
+  }
+
+  // can be accessed by the HR role and the admin role
+  fillPosition(
+    positionId: string,
+    hiredCandidateId: string
+  ): Observable<Position> {
+    const params = new HttpParams().set('hiredCandidateId', hiredCandidateId);
+    return this.http.put<Position>(`${this.url}/${positionId}/fill`, null, {
+      params,
+    });
   }
 }
