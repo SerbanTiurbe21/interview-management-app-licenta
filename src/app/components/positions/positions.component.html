@@ -47,7 +47,13 @@
       }"
     >
       <td class="text-center">{{ position.name }}</td>
-      <td class="text-center">{{ position.status }}</td>
+      <td class="text-center">
+        <i
+          [ngClass]="getStatusIcon(position.status, position.subStatus)"
+          class="pi"
+        ></i>
+        {{ position.status }}
+      </td>
       <td class="text-center">{{ position.subStatus || "N/A" }}</td>
       <td class="text-center" *ngIf="isUserAdminOrHr()">
         <p-button
@@ -123,6 +129,69 @@
         class="p-button-sm p-mt-3"
       ></button>
     </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Edit Position"
+  [(visible)]="displayEditPositionDialog"
+  [modal]="true"
+  [responsive]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [baseZIndex]="1000"
+  (onHide)="resetEditPositionForm()"
+>
+  <form [formGroup]="editPositionForm" class="p-fluid">
+    <div class="p-field mb-3">
+      <label for="edit-name">Position Name</label>
+      <input
+        id="edit-name"
+        type="text"
+        class="mt-1"
+        pInputText
+        formControlName="positionName"
+        required
+        placeholder="Enter a position name e.g., name - department"
+      />
+      <small
+        *ngIf="
+          editPositionForm.get('positionName')?.invalid &&
+          (editPositionForm.get('positionName')?.dirty ||
+            editPositionForm.get('positionName')?.touched)
+        "
+        class="p-error"
+      >
+        <div *ngIf="editPositionForm.get('positionName')?.errors?.['required']">
+          Position name is required.
+        </div>
+        <div *ngIf="editPositionForm.get('positionName')?.errors?.['pattern']">
+          Enter a valid position name. e.g., name - department
+        </div>
+      </small>
+    </div>
+    <div class="flex justify-content-center">
+      <div class="p-field p-col mr-2">
+        <button
+          type="button"
+          pButton
+          label="Update"
+          icon="pi pi-check"
+          (click)="updatePosition()"
+          [disabled]="
+            !editPositionForm.valid ||
+            editPositionForm.pristine ||
+            !hasFormChanged()
+          "
+          class="p-button-sm p-mt-3"
+        ></button>
+      </div>
+    </div>
+    <small
+      *ngIf="editPositionForm.pristine || !hasFormChanged()"
+      class="block p-error flex justify-content-center"
+      >No changes made.</small
+    >
   </form>
 </p-dialog>
 

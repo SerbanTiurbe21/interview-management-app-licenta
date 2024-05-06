@@ -17,6 +17,10 @@ const positionNameRegex = /^(.+)\s-\s(.+)$/;
   styleUrls: ['./positions.component.css'],
 })
 export class PositionsComponent implements OnInit, OnDestroy {
+  currentInitialValues: string = '';
+  displayEditPositionDialog = false;
+  currentEditingPosition: Position | null = null;
+  editPositionForm: FormGroup = new FormGroup({});
   positions: Position[] = [];
   displayAddPositionDialog: boolean = false;
   userData: StoredUser | null = null;
@@ -34,6 +38,7 @@ export class PositionsComponent implements OnInit, OnDestroy {
     this.getUserInformation();
     this.loadPositions();
     this.initializeAddPositionForm();
+    this.initializeEditPositionForm();
   }
 
   initializeAddPositionForm(): void {
@@ -41,6 +46,31 @@ export class PositionsComponent implements OnInit, OnDestroy {
       name: ['', [Validators.required, Validators.pattern(positionNameRegex)]],
       status: [PositionStatus.OPEN, Validators.required],
     });
+  }
+
+  initializeEditPositionForm(): void {
+    this.editPositionForm = this.fb.group({
+      positionName: [
+        '',
+        [Validators.required, Validators.pattern(positionNameRegex)],
+      ],
+    });
+  }
+
+  showEditPositionDialog(position: Position): void {
+    this.currentEditingPosition = position;
+    this.editPositionForm.patchValue({
+      positionName: position.name,
+    });
+    this.currentInitialValues = this.editPositionForm.value;
+    this.displayEditPositionDialog = true;
+  }
+
+  resetEditPositionForm(): void {
+    this.editPositionForm.reset({
+      positionName: '',
+    });
+    this.displayEditPositionDialog = false;
   }
 
   resetAddPositionForm(): void {
@@ -138,7 +168,10 @@ export class PositionsComponent implements OnInit, OnDestroy {
       });
   }
 
-  editPosition(position: Position): void {}
+  editPosition(position: Position): void {
+    this.currentEditingPosition = position;
+    this.showEditPositionDialog(position);
+  }
 
   confirmDeactivatePosition(position: Position): void {
     this.confirmationService.confirm({
@@ -185,5 +218,77 @@ export class PositionsComponent implements OnInit, OnDestroy {
           });
       },
     });
+  }
+
+  getStatusIcon(status: string, subStatus?: string): string {
+    if (status === 'OPEN') {
+      return 'pi-circle-on'; // Example: PrimeIcons CIRCLE_ON represents open/active
+    } else if (status === 'IN PROGRESS') {
+      return 'pi-spin pi-spinner'; // Spinner icon for ongoing processes
+    } else if (status === 'CLOSED') {
+      if (subStatus === 'FILLED_UP') {
+        return 'pi-check-circle'; // Check circle for successful completion
+      } else if (subStatus === 'CANCELLED') {
+        return 'pi-times-circle'; // Times circle for cancellation
+      }
+    }
+    return ''; // Default fallback if no specific icon is needed
+  }
+
+  updatePosition(): void {
+    if (this.editPositionForm.valid && this.hasFormChanged()) {
+      if (this.currentEditingPosition) {
+        const updatedPosition: Position = {
+          id: this.currentEditingPosition?.id,
+          name: this.editPositionForm.get('name')?.value,
+          status: this.currentEditingPosition?.status,
+          subStatus: this.currentEditingPosition?.subStatus,
+        };
+        this.positionsService
+          .updatePosition(updatedPosition.id!, updatedPosition)
+          .subscribe({
+            next: () => {
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Position Updated',
+                detail: 'The position has been successfully updated.',
+              });
+              this.displayEditPositionDialog = false;
+              this.loadPositions();
+            },
+            error: (error) => {
+              let detail = 'An error occurred. Please try again later.';
+              if (error instanceof HttpErrorResponse) {
+                switch (error.status) {
+                  case 400:
+                    detail = error.error.message;
+                    break;
+                  case 401:
+                    detail = 'You are not authorized to perform this action.';
+                    break;
+                  case 403:
+                    detail = 'You are forbidden from performing this action.';
+                    break;
+                  case 404:
+                    detail = 'The resource was not found.';
+                    break;
+                }
+              }
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Failed to add candidate',
+                detail: detail,
+              });
+            },
+          });
+      }
+    }
+  }
+
+  hasFormChanged(): boolean {
+    return (
+      JSON.stringify(this.currentInitialValues) !==
+      JSON.stringify(this.editPositionForm.value)
+    );
   }
 }
