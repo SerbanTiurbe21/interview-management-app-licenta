@@ -33,7 +33,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.storedUser = user;
         this.isAdminOrHr =
           this.roleService.isAdmin() || this.roleService.isHR();
-        this.setupMenu(user);
+        setTimeout(() => {
+          this.setupMenu(user);
+        }, 10);
       });
   }
 

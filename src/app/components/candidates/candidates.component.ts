@@ -32,6 +32,10 @@ const positionNameRegex = /^(.+)\s-\s(.+)$/;
   styleUrls: ['./candidates.component.css'],
 })
 export class CandidatesComponent implements OnInit, OnDestroy {
+  initialUpdateCandidateFormValues: any = {};
+  allDevelopers: RetrievedUser[] = [];
+  selectedCandidate: Candidate | null = null;
+  editCandidateForm: FormGroup = new FormGroup({});
   selectedDeveloperId: string = '';
   filteredDevelopers: RetrievedUser[] = [];
   developers: RetrievedUser[] = [];
@@ -67,6 +71,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeCandidateForm();
+    this.initializeEditCandidateForm();
     this.initializeAddPositionForm();
     this.retrieveOpenAndInProgressPositions();
     this.retrieveAllPositions();
@@ -77,6 +82,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
         this.userData = user;
       });
     this.loadCandidatesBasedOnRole();
+    this.loadAllDevelopers();
     this.loadDevelopers();
   }
 
@@ -95,6 +101,65 @@ export class CandidatesComponent implements OnInit, OnDestroy {
       position: ['', Validators.required],
       assignedTo: ['', Validators.required],
     });
+  }
+
+  initializeEditCandidateForm(): void {
+    this.editCandidateForm = this.fb.group({
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      phoneNumber: ['', [Validators.required, Validators.pattern(phoneRegex)]],
+      cvLink: ['', [Validators.required, Validators.pattern(cvLinkRegex)]],
+      interviewDate: ['', [Validators.required, Validators.pattern(dateRegex)]],
+      position: ['', Validators.required],
+      assignedTo: ['', Validators.required],
+    });
+  }
+
+  // showEditCandidateDialog(candidate: Candidate): void {
+  //   const positionName: string = this.getPositionNameById(
+  //     candidate.positionId!
+  //   );
+  //   const developerName: string = this.getDeveloperNameById(
+  //     candidate.assignedTo!
+  //   );
+  //   this.editCandidateForm.reset({
+  //     name: candidate.name,
+  //     email: candidate.email,
+  //     phoneNumber: candidate.phoneNumber,
+  //     cvLink: candidate.cvLink,
+  //     interviewDate: candidate.interviewDate,
+  //     position: positionName, // Ensure this matches your position selection mechanism
+  //     assignedTo: developerName, // Update logic to handle showing the assigned person's name or ID
+  //   });
+  //   this.displayEditCandidateDialog = true;
+  // }
+
+  showEditCandidateDialog(candidate: Candidate): void {
+    if (!this.allDevelopers.length) {
+      this.loadAllDevelopers();
+    }
+
+    this.prepareEditForm(candidate);
+  }
+
+  prepareEditForm(candidate: Candidate): void {
+    this.selectedCandidate = candidate;
+    const positionName = this.getPositionNameById(candidate.positionId!);
+    const developerName = this.getDeveloperNameById(candidate.assignedTo!);
+
+    this.selectedDeveloperId = candidate.assignedTo!!; // Store the current developer ID
+
+    this.editCandidateForm.setValue({
+      name: candidate.name,
+      email: candidate.email,
+      phoneNumber: candidate.phoneNumber,
+      cvLink: candidate.cvLink,
+      interviewDate: candidate.interviewDate,
+      position: positionName,
+      assignedTo: developerName,
+    });
+    this.initialUpdateCandidateFormValues = this.editCandidateForm.value;
+    this.displayEditCandidateDialog = true;
   }
 
   initializeAddPositionForm(): void {
@@ -162,7 +227,106 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  editCandidate(candidate: Candidate): void {}
+  editCandidate(candidate: Candidate): void {
+    this.selectedCandidate = candidate;
+    this.showEditCandidateDialog(candidate);
+  }
+
+  getDeveloperNameById(id: string): string {
+    const developer = this.allDevelopers.find((dev) => dev.id === id);
+    return developer
+      ? `${developer.firstName} ${developer.lastName}`
+      : 'Unknown Developer';
+  }
+
+  getPositionIdByName(name: string): string {
+    const position = this.allPositions.find((pos) => pos.name === name);
+    return position ? position.id! : '';
+  }
+
+  hasFormChanged(): boolean {
+    return (
+      !this.editCandidateForm.pristine &&
+      JSON.stringify(this.initialUpdateCandidateFormValues) !==
+        JSON.stringify(this.editCandidateForm.value)
+    );
+  }
+
+  updateCandidate(): void {
+    if (
+      this.editCandidateForm.valid &&
+      this.selectedCandidate &&
+      this.hasFormChanged()
+    ) {
+      const newDeveloperId: string =
+        this.editCandidateForm.get('assignedTo')?.value.id;
+      const newPositionId: string = this.getPositionIdByName(
+        this.editCandidateForm.get('position')?.value
+      );
+
+      const updatedCandidate: Candidate = {
+        id: this.selectedCandidate.id,
+        name: this.editCandidateForm.get('name')?.value,
+        phoneNumber: this.editCandidateForm.get('phoneNumber')?.value,
+        cvLink: this.editCandidateForm.get('cvLink')?.value,
+        email: this.editCandidateForm.get('email')?.value,
+        interviewDate: this.editCandidateForm.get('interviewDate')?.value,
+        documentId: this.selectedCandidate.documentId,
+        assignedTo: newDeveloperId,
+        positionId: newPositionId,
+      };
+
+      this.candidatesService
+        .updateCandidate(this.selectedCandidate.id!, updatedCandidate)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: () => {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Update Successful',
+              detail: 'Candidate updated successfully!',
+            });
+            this.displayEditCandidateDialog = false;
+            this.loadCandidatesBasedOnRole();
+            this.editCandidateForm.reset();
+          },
+          error: (error) => {
+            let detail = 'An error occurred. Please try again later.';
+            if (error instanceof HttpErrorResponse) {
+              console.error('Error updating candidate:', error.message);
+              switch (error.status) {
+                case 400:
+                  detail = error.error.message;
+                  break;
+                case 401:
+                  detail = 'You are not authorized to perform this action.';
+                  break;
+                case 403:
+                  detail = 'You are forbidden from performing this action.';
+                  break;
+                case 404:
+                  detail = 'The resource was not found.';
+                  break;
+                default:
+                  detail = 'Unexpected error occurred.';
+                  break;
+              }
+            }
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Failed to Update Candidate',
+              detail: detail,
+            });
+          },
+        });
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Validation Error',
+        detail: 'Please check the form fields.',
+      });
+    }
+  }
 
   confirmDeleteCandidate(candidate: Candidate): void {
     this.confirmationService.confirm({
@@ -419,6 +583,20 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     this.displayAddPositionDialog = false;
   }
 
+  loadAllDevelopers(): void {
+    this.userService
+      .getAllUsersByRole('DEVELOPER')
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (developers) => {
+          this.allDevelopers = developers;
+        },
+        error: (error) => {
+          console.error('Error loading developers:', error);
+        },
+      });
+  }
+
   loadDevelopers(): void {
     combineLatest([
       this.candidatesService.getAllCandidates(),
@@ -455,6 +633,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
           .includes(event.query.toLowerCase()) ||
         developer.lastName?.toLowerCase().includes(event.query.toLowerCase())
     );
+
     if (this.filteredDevelopers.length === 0 && event.query.trim() !== '') {
       this.filteredDevelopers = [
         {
@@ -479,7 +658,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   }
 
   onDeveloperSelect(event: AutoCompleteOnSelectEvent): void {
-    console.log('Selected developer:', event);
     if (event.value.id) {
       this.selectedDeveloperId = event.value.id;
       this.addCandidateForm.get('assignedTo')?.setValue(event.value.fullName);
@@ -538,6 +716,13 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             });
           },
         });
+    }
+  }
+
+  revertChanges(): void {
+    if (this.selectedCandidate && this.hasFormChanged()) {
+      // Assuming 'prepareEditForm' sets the form with initial values properly
+      this.prepareEditForm(this.selectedCandidate);
     }
   }
 }

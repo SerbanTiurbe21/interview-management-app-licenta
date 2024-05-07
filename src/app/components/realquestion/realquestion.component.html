@@ -33,7 +33,7 @@
     [value]="questions"
     [paginator]="true"
     [rows]="5"
-    [rowsPerPageOptions]="[5, 10]"
+    [rowsPerPageOptions]="[5, 10, 15]"
   >
     <ng-template pTemplate="header">
       <tr>
@@ -49,6 +49,7 @@
         <td class="text-center">
           <p-button
             icon="pi pi-pencil"
+            pTooltip="Edit question"
             [rounded]="true"
             [text]="true"
             (click)="editQuestion(question)"
@@ -56,6 +57,7 @@
           </p-button>
           <p-button
             icon="pi pi-trash"
+            pTooltip="Delete question"
             [rounded]="true"
             [text]="true"
             (click)="deleteQuestion(question)"

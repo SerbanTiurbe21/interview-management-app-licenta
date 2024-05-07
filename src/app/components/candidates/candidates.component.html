@@ -76,12 +76,14 @@
       <td class="text-center" *ngIf="isUserAdminOrHr()">
         <p-button
           icon="pi pi-pencil"
+          pTooltip="Edit Candidate"
           [rounded]="true"
           [text]="true"
           (click)="editCandidate(candidate)"
         ></p-button>
         <p-button
           icon="pi pi-trash"
+          pTooltip="Delete Candidate"
           [rounded]="true"
           [text]="true"
           (click)="confirmDeleteCandidate(candidate)"
@@ -360,6 +362,237 @@
         (click)="addPosition()"
         [disabled]="!addPositionForm.valid"
         class="p-button-sm p-mt-3"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Edit Candidate"
+  [(visible)]="displayEditCandidateDialog"
+  [modal]="true"
+  [responsive]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '40vw', height: 'auto' }"
+  (onHide)="editCandidateForm.reset()"
+>
+  <form [formGroup]="editCandidateForm" class="p-fluid">
+    <div class="grid">
+      <div class="field col-12 md:col-6">
+        <label for="edit-name">Name</label>
+        <input
+          formControlName="name"
+          id="edit-name"
+          type="text"
+          pInputText
+          placeholder="Enter candidate's name"
+        />
+        <small
+          *ngIf="
+            editCandidateForm.get('name')?.invalid &&
+            (editCandidateForm.get('name')?.dirty ||
+              editCandidateForm.get('name')?.touched)
+          "
+          class="p-error"
+        >
+          <div *ngIf="editCandidateForm.get('name')?.errors?.['required']">
+            Name is required.
+          </div>
+        </small>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="edit-email">Email</label>
+        <input
+          formControlName="email"
+          id="edit-email"
+          type="email"
+          pInputText
+          placeholder="Enter candidate's email"
+        />
+        <small
+          *ngIf="
+            editCandidateForm.get('email')?.invalid &&
+            (editCandidateForm.get('email')?.dirty ||
+              editCandidateForm.get('email')?.touched)
+          "
+          class="p-error"
+        >
+          <div *ngIf="editCandidateForm.get('email')?.errors?.['required']">
+            Email is required.
+          </div>
+          <div *ngIf="editCandidateForm.get('email')?.errors?.['email']">
+            Enter a valid email.
+          </div>
+        </small>
+        <small></small>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="edit-phoneNumber">Phone Number</label>
+        <input
+          formControlName="phoneNumber"
+          id="edit-phoneNumber"
+          type="text"
+          pInputText
+          placeholder="Enter candidate's phone number"
+        />
+        <small
+          *ngIf="
+            editCandidateForm.get('phoneNumber')?.invalid &&
+            (editCandidateForm.get('phoneNumber')?.dirty ||
+              editCandidateForm.get('phoneNumber')?.touched)
+          "
+          class="p-error"
+        >
+          <div
+            *ngIf="editCandidateForm.get('phoneNumber')?.errors?.['required']"
+          >
+            Phone number is required.
+          </div>
+          <div
+            *ngIf="editCandidateForm.get('phoneNumber')?.errors?.['pattern']"
+          >
+            Enter a valid phone number.
+          </div>
+        </small>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="edit-cvLink">CV Link</label>
+        <input
+          formControlName="cvLink"
+          id="edit-cvLink"
+          type="text"
+          pInputText
+          placeholder="Enter URL to candidate's CV"
+        />
+        <small
+          *ngIf="
+            editCandidateForm.get('cvLink')?.invalid &&
+            (editCandidateForm.get('cvLink')?.dirty ||
+              editCandidateForm.get('cvLink')?.touched)
+          "
+          class="p-error"
+        >
+          <div *ngIf="editCandidateForm.get('cvLink')?.errors?.['required']">
+            CV link is required.
+          </div>
+          <div *ngIf="editCandidateForm.get('cvLink')?.errors?.['pattern']">
+            Enter a valid URL. (http:// or https://)
+          </div>
+        </small>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="edit-interviewDate">Interview Date</label>
+        <p-calendar
+          formControlName="interviewDate"
+          id="edit-interviewDate"
+          [showIcon]="true"
+          dataType="string"
+          [dateFormat]="'yy-mm-dd'"
+        ></p-calendar>
+        <small
+          *ngIf="
+            editCandidateForm.get('interviewDate')?.invalid &&
+            (editCandidateForm.get('interviewDate')?.dirty ||
+              editCandidateForm.get('interviewDate')?.touched)
+          "
+          class="p-error"
+        >
+          <div
+            *ngIf="editCandidateForm.get('interviewDate')?.errors?.['required']"
+          >
+            Interview date is required.
+          </div>
+          <div
+            *ngIf="editCandidateForm.get('interviewDate')?.errors?.['pattern']"
+          >
+            Enter a valid date. (yyyy-mm-dd)
+          </div>
+        </small>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="edit-assignedTo">Assigned To</label>
+        <p-autoComplete
+          formControlName="assignedTo"
+          id="edit-assignedTo"
+          [suggestions]="filteredDevelopers"
+          (completeMethod)="filterDevelopers($event)"
+          field="fullName"
+          [dropdown]="true"
+          placeholder="Select a developer"
+          [forceSelection]="true"
+          [appendTo]="'body'"
+        ></p-autoComplete>
+        <small
+          *ngIf="
+            editCandidateForm.get('assignedTo')?.invalid &&
+            (editCandidateForm.get('assignedTo')?.dirty ||
+              editCandidateForm.get('assignedTo')?.touched)
+          "
+          class="p-error"
+        >
+          <div
+            *ngIf="editCandidateForm.get('assignedTo')?.errors?.['required']"
+          >
+            Assigned to is required.
+          </div>
+        </small>
+      </div>
+
+      <div class="field col-12">
+        <label for="edit-position">Position</label>
+        <p-autoComplete
+          formControlName="position"
+          id="edit-position"
+          [suggestions]="filteredPositions"
+          (completeMethod)="filterPosition($event)"
+          field="name"
+          [dropdown]="true"
+          placeholder="Select a position"
+          [appendTo]="'body'"
+        ></p-autoComplete>
+        <small
+          *ngIf="
+            editCandidateForm.get('position')?.invalid &&
+            (editCandidateForm.get('position')?.dirty ||
+              editCandidateForm.get('position')?.touched)
+          "
+          class="p-error"
+        >
+          <div *ngIf="editCandidateForm.get('position')?.errors?.['required']">
+            Position is required.
+          </div>
+        </small>
+      </div>
+    </div>
+    <div class="flex justify-content-center flex-column">
+      <button
+        type="button"
+        pButton
+        label="Update"
+        icon="pi pi-check"
+        (click)="updateCandidate()"
+        class="p-button-sm p-mt-3"
+        [disabled]="
+          !editCandidateForm.valid ||
+          editCandidateForm.pristine ||
+          !hasFormChanged()
+        "
+        class="p-button-sm mb-3"
+      ></button>
+      <button
+        type="button"
+        pButton
+        label="Revert Changes"
+        icon="pi pi-undo"
+        (click)="revertChanges()"
+        class="p-button-sm p-mt-3 p-ml-2"
+        [disabled]="editCandidateForm.pristine || !hasFormChanged()"
       ></button>
     </div>
   </form>
