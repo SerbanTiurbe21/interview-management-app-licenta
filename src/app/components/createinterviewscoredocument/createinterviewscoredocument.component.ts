@@ -223,6 +223,7 @@ export class CreateinterviewscoredocumentComponent
   candidatePosition: Position | null = null;
   displayEditSectionDialog: boolean = false;
   editSectionForm: FormGroup = new FormGroup({});
+
   constructor(
     private router: Router,
     private fb: FormBuilder,
@@ -237,6 +238,7 @@ export class CreateinterviewscoredocumentComponent
   ) {}
 
   ngOnInit(): void {
+    this.loadState();
     this.getCandidateIdFromRoute();
     this.loadCandidateData();
     this.getCurrentUser();
@@ -245,8 +247,24 @@ export class CreateinterviewscoredocumentComponent
   }
 
   ngOnDestroy(): void {
+    this.saveState([]);
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
+  }
+
+  saveState(sections: Section[]): void {
+    const state = {
+      sections: sections,
+    };
+    localStorage.setItem('interviewState', JSON.stringify(state));
+  }
+
+  loadState(): void {
+    const state = localStorage.getItem('interviewState');
+    if (state) {
+      const parsedState = JSON.parse(state);
+      this.sections = parsedState.sections;
+    }
   }
 
   getCurrentUser(): void {
@@ -279,6 +297,7 @@ export class CreateinterviewscoredocumentComponent
   }
 
   goBack(): void {
+    this.saveState([]);
     this.router.navigate(['/candidates']);
   }
 
@@ -338,6 +357,8 @@ export class CreateinterviewscoredocumentComponent
         interviewers: interviewers,
       };
       this.sections.push(section);
+
+      this.saveState(this.sections);
       this.resetAddSectionDialog();
     }
   }
@@ -366,7 +387,7 @@ export class CreateinterviewscoredocumentComponent
 
     if (numberOfSections > 0) {
       const finalScore: number = totalScore / numberOfSections;
-      const positionName: string = this.candidatePosition?.name || 'Unknown';
+      const positionName: string = this.candidatePosition?.name!!;
       const interviewDate: string =
         this.candidate?.interviewDate || new Date().toISOString();
       const lastUpdate: string = new Date().toISOString();
@@ -504,6 +525,7 @@ export class CreateinterviewscoredocumentComponent
       accept: () => {
         const index: number = this.sections.indexOf(section);
         this.sections.splice(index, 1);
+        this.saveState(this.sections);
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
@@ -533,6 +555,7 @@ export class CreateinterviewscoredocumentComponent
         (s) => s.title === section.title
       );
       this.sections[index] = section;
+      this.saveState(this.sections);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
