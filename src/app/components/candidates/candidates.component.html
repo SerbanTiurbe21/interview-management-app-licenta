@@ -88,6 +88,22 @@
           [text]="true"
           (click)="confirmDeleteCandidate(candidate)"
         ></p-button>
+        <p-button
+          *ngIf="candidate.documentId"
+          icon="pi pi-file"
+          pTooltip="Load Document"
+          [rounded]="true"
+          [text]="true"
+          (click)="loadInterviewScoreDocument(candidate.documentId)"
+        ></p-button>
+        <p-button
+          *ngIf="!candidate.documentId"
+          icon="pi pi-plus"
+          pTooltip="Create Document"
+          [rounded]="true"
+          [text]="true"
+          (click)="createInterviewScoreDocument(candidate)"
+        ></p-button>
       </td>
     </tr>
   </ng-template>

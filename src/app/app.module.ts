@@ -41,6 +41,9 @@ import { UsermanagementComponent } from './components/usermanagement/usermanagem
 import { GeneralinformationComponent } from './components/generalinformation/generalinformation.component';
 import { CalendarModule } from 'primeng/calendar';
 import { PositionsComponent } from './components/positions/positions.component';
+import { LoadinterviewscoredocumentComponent } from './components/loadinterviewscoredocument/loadinterviewscoredocument.component';
+import { CreateinterviewscoredocumentComponent } from './components/createinterviewscoredocument/createinterviewscoredocument.component';
+import { AccordionModule } from 'primeng/accordion';
 
 @NgModule({
   declarations: [
@@ -57,6 +60,8 @@ import { PositionsComponent } from './components/positions/positions.component';
     UsermanagementComponent,
     GeneralinformationComponent,
     PositionsComponent,
+    LoadinterviewscoredocumentComponent,
+    CreateinterviewscoredocumentComponent,
   ],
   imports: [
     BrowserModule,
@@ -83,6 +88,7 @@ import { PositionsComponent } from './components/positions/positions.component';
     AutoCompleteModule,
     DynamicDialogModule,
     CalendarModule,
+    AccordionModule,
   ],
   providers: [
     MessageService,

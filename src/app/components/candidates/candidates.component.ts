@@ -17,6 +17,7 @@ import { UserService } from 'src/app/services/user.service';
 import { RetrievedUser } from 'src/app/interfaces/user/retrieveduser.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PositionStatus } from 'src/app/interfaces/positionstatus.enum';
+import { Router } from '@angular/router';
 
 const phoneRegex =
   /^(\+4|)?(07[0-8]{1}[0-9]{1}|02[0-9]{2}|03[0-9]{2}){1}?(\s|\.|\-)?([0-9]{3}(\s|\.|\-|)){2}$/;
@@ -63,7 +64,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     private positionsService: PositionsService,
     private userService: UserService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private router: Router
   ) {
     this.today = new Date();
     this.today.setHours(0, 0, 0, 0);
@@ -721,8 +723,15 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   revertChanges(): void {
     if (this.selectedCandidate && this.hasFormChanged()) {
-      // Assuming 'prepareEditForm' sets the form with initial values properly
       this.prepareEditForm(this.selectedCandidate);
     }
+  }
+
+  loadInterviewScoreDocument(documentId: string): void {
+    this.router.navigate(['/load-document', documentId]);
+  }
+
+  createInterviewScoreDocument(candidate: Candidate): void {
+    this.router.navigate(['create-document', { candidate: candidate.id }]);
   }
 }

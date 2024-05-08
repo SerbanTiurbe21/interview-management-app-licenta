@@ -11,6 +11,8 @@ import { PagenotfoundComponent } from './components/pagenotfound/pagenotfound.co
 import { CandidatesComponent } from './components/candidates/candidates.component';
 import { UsermanagementComponent } from './components/usermanagement/usermanagement.component';
 import { PositionsComponent } from './components/positions/positions.component';
+import { LoadinterviewscoredocumentComponent } from './components/loadinterviewscoredocument/loadinterviewscoredocument.component';
+import { CreateinterviewscoredocumentComponent } from './components/createinterviewscoredocument/createinterviewscoredocument.component';
 
 const routes: Routes = [
   {
@@ -54,6 +56,16 @@ const routes: Routes = [
   {
     path: 'positions',
     component: PositionsComponent,
+    canActivate: [canActivate],
+  },
+  {
+    path: 'load-document/:id',
+    component: LoadinterviewscoredocumentComponent,
+    canActivate: [canActivate],
+  },
+  {
+    path: 'create-document',
+    component: CreateinterviewscoredocumentComponent,
     canActivate: [canActivate],
   },
   // {
