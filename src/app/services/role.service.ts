@@ -29,4 +29,8 @@ export class RoleService {
   isDeveloper(): boolean {
     return this.userData && this.userData.role === 'DEVELOPER';
   }
+
+  isUserAdminOrHr(): boolean {
+    return this.isAdmin() || this.isHR();
+  }
 }

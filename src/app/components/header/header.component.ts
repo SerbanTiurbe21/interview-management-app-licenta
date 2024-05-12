@@ -31,11 +31,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.storedUser = user;
-        this.isAdminOrHr =
-          this.roleService.isAdmin() || this.roleService.isHR();
-        setTimeout(() => {
-          this.setupMenu(user);
-        }, 10);
+        this.isAdminOrHr = this.roleService.isUserAdminOrHr();
+        // setTimeout(() => {
+        this.setupMenu(user, this.isAdminOrHr);
+        // }, 10);
       });
   }
 
@@ -52,10 +51,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (currentTheme && currentTheme.includes('light')) {
       this.themeService.switchTheme('bootstrap4-dark-blue');
     }
-    this.setupMenu(this.storedUser);
+    this.setupMenu(this.storedUser, this.isAdminOrHr);
   }
 
-  setupMenu(user: StoredUser | null): void {
+  setupMenu(user: StoredUser | null, isAdmin: boolean): void {
     this.items = [
       {
         label: 'Home',
@@ -94,7 +93,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           },
         ],
       });
-      this.isAdminOrHr
+      isAdmin
         ? this.items.push({
             label: 'User Management',
             icon: 'pi pi-fw pi-users',
@@ -103,18 +102,24 @@ export class HeaderComponent implements OnInit, OnDestroy {
             },
           })
         : {};
-      this.items.push({
-        label: 'Profile',
-        icon: 'pi pi-fw pi-user',
-        command: () => {
-          this.router.navigate(['/profile']);
-        },
-      });
       this.addThemeItem();
       this.items.push({
-        label: 'Logout',
-        icon: 'pi pi-fw pi-sign-out',
-        command: () => this.authService.logout(),
+        label: 'Account',
+        icon: 'pi pi-fw pi-user',
+        items: [
+          {
+            label: 'Profile',
+            icon: 'pi pi-fw pi-user',
+            command: () => {
+              this.router.navigate(['/profile']);
+            },
+          },
+          {
+            label: 'Logout',
+            icon: 'pi pi-fw pi-sign-out',
+            command: () => this.authService.logout(),
+          },
+        ],
       });
     } else {
       this.items.push({

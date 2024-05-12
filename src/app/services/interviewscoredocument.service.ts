@@ -26,11 +26,11 @@ export class InterviewscoredocumentService {
   }
 
   // can be accessed by HR and admin roles
-  getInterviewByCandidateId(
+  getFormattedInterviewByCandidateId(
     candidateId: string
   ): Observable<InterviewScoreDocument> {
     return this.http.get<InterviewScoreDocument>(
-      `${this.url}/by-candidate-id/${candidateId}`
+      `${this.url}/formatted-by-candidate-id/${candidateId}`
     );
   }
 
@@ -40,12 +40,29 @@ export class InterviewscoredocumentService {
   }
 
   // can be accessed by HR, admin and DEVELOPER roles
-  updateInterview(id: string, interviewScoreDocument: InterviewScoreDocument) {
-    return this.http.put(`${this.url}/${id}`, interviewScoreDocument);
+  updateInterview(
+    id: string,
+    interviewScoreDocument: InterviewScoreDocument
+  ): Observable<void> {
+    return this.http.put<void>(`${this.url}/${id}`, interviewScoreDocument);
   }
 
   // can be accessed by HR and admin roles
-  deleteInterviewById(id: string) {
-    return this.http.delete(`${this.url}/${id}`);
+  deleteInterviewById(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.url}/${id}`);
+  }
+
+  // can be accessed by HR and admin roles
+  closeInterviewById(id: string): Observable<void> {
+    return this.http.put<void>(`${this.url}/close/${id}`, null);
+  }
+
+  // cand be accessed by HR, DEVELOPER and admin roles
+  getInterviewByCandidateId(
+    candidateId: string
+  ): Observable<InterviewScoreDocument> {
+    return this.http.get<InterviewScoreDocument>(
+      `${this.url}/by-candidate-id/${candidateId}`
+    );
   }
 }

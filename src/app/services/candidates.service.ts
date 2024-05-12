@@ -51,4 +51,9 @@ export class CandidatesService {
   deleteCandidate(id: string): Observable<void> {
     return this.http.delete<void>(`${this.url}/${id}`);
   }
+
+  // can be accessed by HR, DEVELOPER, and admin roles
+  getCandidateByDocumentId(documentId: string): Observable<Candidate> {
+    return this.http.get<Candidate>(`${this.url}/document/${documentId}`);
+  }
 }

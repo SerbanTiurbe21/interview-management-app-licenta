@@ -44,6 +44,7 @@ import { PositionsComponent } from './components/positions/positions.component';
 import { LoadinterviewscoredocumentComponent } from './components/loadinterviewscoredocument/loadinterviewscoredocument.component';
 import { CreateinterviewscoredocumentComponent } from './components/createinterviewscoredocument/createinterviewscoredocument.component';
 import { AccordionModule } from 'primeng/accordion';
+import { SpeedDialModule } from 'primeng/speeddial';
 
 @NgModule({
   declarations: [
@@ -89,6 +90,7 @@ import { AccordionModule } from 'primeng/accordion';
     DynamicDialogModule,
     CalendarModule,
     AccordionModule,
+    SpeedDialModule,
   ],
   providers: [
     MessageService,

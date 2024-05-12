@@ -1,1 +1,282 @@
-<p>loadinterviewscoredocument works!</p>
+<div>
+  <p-toolbar>
+    <div
+      class="p-toolbar-group-left flex flex-column justify-content-center align-items-center -mt-3"
+    >
+      <p-button
+        label="Back"
+        [rounded]="true"
+        [text]="true"
+        icon="pi pi-arrow-left"
+        (click)="goBack()"
+        class="w-full"
+      ></p-button>
+      <h1 class="w-full mt-0">Interview Score Document</h1>
+    </div>
+
+    <div class="p-toolbar-group-right" *ngIf="!isDocumentLocked">
+      <button
+        pButton
+        type="button"
+        icon="pi pi-plus"
+        label="Add Interview Section"
+        (click)="showAddSectionDialog()"
+      ></button>
+    </div>
+    <div class="p-toolbar-group-right" *ngIf="isDocumentLocked === true">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Final Score</h3>
+          <h3
+            class="card-text flex justify-content-center align-items-center font-bold"
+          >
+            {{ interviewScoreDocument?.finalScore }}
+          </h3>
+        </div>
+      </div>
+    </div>
+  </p-toolbar>
+</div>
+
+<p-accordion [multiple]="true">
+  <p-accordionTab *ngFor="let section of sections" [header]="section.title">
+    <div *ngFor="let interviewer of section.interviewers">
+      <div class="p-grid p-nogutter">
+        <div class="p-col-12 p-md-3"><b>Name:</b> {{ interviewer.name }}</div>
+        <div class="p-col-12 p-md-3"><b>Role:</b> {{ interviewer.role }}</div>
+        <div class="p-col-12 p-md-6">
+          <b>Feedback:</b> {{ interviewer.feedback }}
+        </div>
+      </div>
+      <div class="p-grid p-nogutter">
+        <div class="p-col-12"><b>Score:</b> {{ interviewer.score }}</div>
+      </div>
+      <hr />
+    </div>
+    <ng-template
+      pTemplate="content"
+      *ngIf="interviewScoreDocument?.status !== 'LOCKED'"
+    >
+      <div class="p-d-flex p-jc-end">
+        <p-button
+          icon="pi pi-pencil"
+          [rounded]="true"
+          [text]="true"
+          pTooltip="Edit Section"
+          (click)="editSection(section)"
+        ></p-button>
+        <p-button
+          icon="pi pi-trash"
+          [rounded]="true"
+          [text]="true"
+          pTooltip="Delete Section"
+          (click)="deleteSection(section)"
+        ></p-button>
+      </div>
+    </ng-template>
+  </p-accordionTab>
+</p-accordion>
+
+<div class="card" *ngIf="!isDocumentLocked && isAdminOrHr">
+  <div
+    style="position: fixed; bottom: 5rem; right: 5rem"
+    class="speeddial-circle-demo"
+  >
+    <p-speedDial
+      [model]="speedDialItems"
+      [direction]="'up-left'"
+      [type]="'quarter-circle'"
+      buttonClassName="p-button"
+    >
+    </p-speedDial>
+  </div>
+</div>
+
+<button
+  *ngIf="!isDocumentLocked && !isAdminOrHr"
+  [disabled]="!unsavedChanges"
+  pButton
+  type="button"
+  label="Save Sections"
+  icon="pi pi-save"
+  class="p-button-rounded p-button-lg p-shadow-6"
+  style="position: fixed; bottom: 2rem; right: 2rem"
+  (click)="saveSections()"
+></button>
+
+<p-dialog
+  header="Add Interview Section"
+  [(visible)]="displayAddSectionDialog"
+  [modal]="true"
+  [style]="{ width: '30vw', height: 'auto' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="resetAddSectionDialog()"
+>
+  <form [formGroup]="addSectionForm" class="p-fluid">
+    <div class="grid">
+      <div class="field col-12">
+        <label for="sectionName">Section Name</label>
+        <p-autoComplete
+          formControlName="sectionName"
+          [suggestions]="filteredSectionTitleItems"
+          (completeMethod)="filterSection($event)"
+          [dropdown]="true"
+          [appendTo]="'body'"
+          field="value"
+          [forceSelection]="true"
+          placeholder="Select section name"
+        ></p-autoComplete>
+        <small
+          *ngIf="
+            addSectionForm.get('sectionName')?.invalid &&
+            (addSectionForm.get('sectionName')?.dirty ||
+              addSectionForm.get('sectionName')?.touched)
+          "
+          class="p-error"
+        >
+          Section name is required.
+        </small>
+      </div>
+      <div class="field col-12">
+        <label for="feedback">Feedback</label>
+        <input
+          formControlName="feedback"
+          type="text"
+          id="feedback"
+          pInputText
+          placeholder="Enter feedback"
+        />
+        <small
+          *ngIf="
+            addSectionForm.get('feedback')?.invalid &&
+            (addSectionForm.get('feedback')?.dirty ||
+              addSectionForm.get('feedback')?.touched)
+          "
+          class="p-error"
+        >
+          Feedback is required.
+        </small>
+      </div>
+      <div class="field col-12">
+        <label for="score">Score</label>
+        <input
+          formControlName="score"
+          type="number"
+          id="score"
+          pInputText
+          placeholder="Enter score"
+          min="0"
+          max="100"
+        />
+        <small
+          *ngIf="
+            addSectionForm.get('score')?.invalid &&
+            (addSectionForm.get('score')?.dirty ||
+              addSectionForm.get('score')?.touched)
+          "
+          class="p-error"
+        >
+          Score is required and must be a valid number.
+        </small>
+      </div>
+    </div>
+    <div class="flex justify-content-center">
+      <button
+        type="button"
+        pButton
+        label="Add Section"
+        icon="pi pi-check"
+        (click)="saveSection()"
+        class="p-button-sm p-mt-3"
+        [disabled]="addSectionForm.invalid"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-dialog
+  header="Edit Section"
+  [(visible)]="displayEditSectionDialog"
+  [modal]="true"
+  [style]="{ width: '25vw', height: 'auto' }"
+  [draggable]="false"
+  [resizable]="false"
+  (onHide)="resetEditSectionDialog()"
+>
+  <form [formGroup]="editSectionForm" class="p-fluid">
+    <div class="p-field mb-3">
+      <label for="sectionName">Section Name</label>
+      <input
+        type="text"
+        id="sectionName"
+        pInputText
+        formControlName="sectionName"
+      />
+    </div>
+    <div class="p-field mb-3">
+      <label for="feedback">Feedback</label>
+      <input
+        formControlName="feedback"
+        type="text"
+        id="feedback"
+        pInputText
+        placeholder="Enter feedback"
+      />
+      <small
+        *ngIf="
+          editSectionForm.get('feedback')?.invalid &&
+          (editSectionForm.get('feedback')?.dirty ||
+            editSectionForm.get('feedback')?.touched)
+        "
+        class="p-error"
+      >
+        Feedback is required.
+      </small>
+    </div>
+    <div class="p-field mb-3">
+      <label for="score">Score</label>
+      <input
+        formControlName="score"
+        type="number"
+        id="score"
+        pInputText
+        placeholder="Enter score (0-100)"
+        min="0"
+        max="100"
+      />
+      <small
+        *ngIf="
+          editSectionForm.get('score')?.invalid &&
+          (editSectionForm.get('score')?.dirty ||
+            editSectionForm.get('score')?.touched)
+        "
+        class="p-error"
+      >
+        Score is required and must be a valid number.
+      </small>
+    </div>
+    <div class="p-d-flex p-jc-between p-mt-2">
+      <button
+        pButton
+        label="Reset"
+        type="button"
+        icon="pi pi-refresh"
+        class="p-button mb-2"
+        (click)="resetFormToInitial()"
+      ></button>
+      <button
+        pButton
+        label="Save"
+        type="button"
+        class="p-button"
+        icon="pi pi-check"
+        (click)="saveUpdatedSection()"
+        [disabled]="editSectionForm.invalid || editSectionForm.pristine"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-toast position="top-center"></p-toast>
+<p-confirmDialog></p-confirmDialog>

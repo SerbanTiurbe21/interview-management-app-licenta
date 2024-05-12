@@ -50,4 +50,15 @@ export class PositionsService {
       params,
     });
   }
+
+  // can be accessed by the HR, admin and the DEVELOPER role
+  getPositionsByStatuses(
+    status1: string,
+    status2: string
+  ): Observable<Position[]> {
+    const params = new HttpParams()
+      .set('status1', status1)
+      .set('status2', status2);
+    return this.http.get<Position[]>(`${this.url}/statuses`, { params });
+  }
 }

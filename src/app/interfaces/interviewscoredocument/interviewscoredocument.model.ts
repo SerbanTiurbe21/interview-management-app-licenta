@@ -1,3 +1,4 @@
+import { InterviewDocumentStatus } from './interviewdocumentstatus.model';
 import { Section } from './section.model';
 
 export interface InterviewScoreDocument {
@@ -8,4 +9,5 @@ export interface InterviewScoreDocument {
   finalScore: number;
   roleAppliedFor: string;
   candidateId: string;
+  status: InterviewDocumentStatus;
 }

@@ -1,14 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService, SelectItem } from 'primeng/api';
 import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
 import { Subject, takeUntil } from 'rxjs';
 import { Candidate } from 'src/app/interfaces/candidate.model';
+import { InterviewDocumentStatus } from 'src/app/interfaces/interviewscoredocument/interviewdocumentstatus.model';
 import { InterviewerFeedback } from 'src/app/interfaces/interviewscoredocument/interviewerfeedback.model';
 import { InterviewScoreDocument } from 'src/app/interfaces/interviewscoredocument/interviewscoredocument.model';
 import { Section } from 'src/app/interfaces/interviewscoredocument/section.model';
+import { SectionTitle } from 'src/app/interfaces/interviewscoredocument/sectiontitle.model';
 import { Position } from 'src/app/interfaces/position.model';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { AuthService } from 'src/app/services/auth.service';
@@ -16,6 +18,7 @@ import { CandidatesService } from 'src/app/services/candidates.service';
 import { InterviewscoredocumentService } from 'src/app/services/interviewscoredocument.service';
 import { PositionsService } from 'src/app/services/positions.service';
 import { RoleService } from 'src/app/services/role.service';
+import { SectiontitleService } from 'src/app/services/sectiontitle.service';
 
 @Component({
   selector: 'app-createinterviewscoredocument',
@@ -25,191 +28,9 @@ import { RoleService } from 'src/app/services/role.service';
 export class CreateinterviewscoredocumentComponent
   implements OnInit, OnDestroy
 {
-  sectionTitles: string[] = [
-    'Java Comprehension',
-    'Company Values',
-    'Distributed Systems Understanding',
-    'Integration Tests Comprehension',
-    'Automation Tools',
-    'Regression Testing',
-    'System Design Principles',
-    'Cloud Infrastructure and Services',
-    'Microservices Architecture',
-    'Security Best Practices',
-    'Frontend Technologies',
-    'Database Design and Optimization',
-    'DevOps and CI/CD Pipelines',
-    'Data Structures and Algorithms',
-    'Performance Tuning',
-    'Scalability Strategies',
-    'Code Review and Quality Assurance',
-    'Agile and Scrum Methodologies',
-    'Problem-solving Skills',
-    'Project Management',
-    'Machine Learning Basics',
-    'Blockchain Fundamentals',
-    'IoT Concepts',
-    'Big Data Technologies',
-    'Mobile Development Essentials',
-    'User Experience Design',
-    'API Design and RESTful Services',
-    'Software Development Life Cycle',
-    'Business Intelligence',
-    'Data Privacy and Compliance',
-    'Open Source Contributions',
-    'Leadership and Team Collaboration',
-    'Web Development Fundamentals',
-    'Backend Development Best Practices',
-    'Frontend Development Best Practices',
-    'Full Stack Development',
-    'Data Science and Analytics',
-    'Artificial Intelligence Concepts',
-    'Deep Learning Basics',
-    'Natural Language Processing',
-    'Computer Vision Concepts',
-    'Software Architecture and Design Patterns',
-    'Network Programming',
-    'Multithreading and Concurrency',
-    'Debugging Techniques',
-    'Refactoring Techniques',
-    'Test-Driven Development',
-    'Behavior-Driven Development',
-    'Domain-Driven Design',
-    'Functional Programming Concepts',
-    'Object-Oriented Programming Concepts',
-    'Procedural Programming Concepts',
-    'Version Control Systems',
-    'Software Testing Techniques',
-    'Software Deployment and Distribution',
-    'Software Documentation',
-    'Software Licensing',
-    'Software Maintenance',
-    'Software Performance Optimization',
-    'Software Security',
-    'Software Usability',
-    'Software Validation and Verification',
-    'Software Quality',
-    'Software Reliability',
-    'Software Scalability',
-    'Software Auditing',
-    'Software Benchmarking',
-    'Software Configuration Management',
-    'Software Engineering Management',
-    'Software Ergonomics',
-    'Software Metrics and Measurement',
-    'Software Packaging',
-    'Software Process Improvement',
-    'Software Project Management',
-    'Software Requirements Analysis',
-    'Software Reverse Engineering',
-    'Software Risk Management',
-    'Software Verification and Validation',
-    'Software Visualization',
-    'Software Walkthrough',
-    'Pair Programming',
-    'Code Smells and Anti-patterns',
-    'Continuous Integration',
-    'Continuous Delivery',
-    'Continuous Deployment',
-    'Cross-Platform Development',
-    'Responsive Web Design',
-    'Mobile-First Design',
-    'Progressive Web Apps',
-    'Serverless Architecture',
-    'Microfrontend Architecture',
-    'Monolithic Architecture',
-    'Service-Oriented Architecture',
-    'Event-Driven Architecture',
-    'Clean Architecture',
-    'Hexagonal Architecture',
-    'CQRS and Event Sourcing',
-    'Docker and Containerization',
-    'Kubernetes and Orchestration',
-    'Cloud-Native Applications',
-    'Twelve-Factor Apps',
-    'Design Thinking',
-    'Lean Software Development',
-    'Kanban Methodology',
-    'Extreme Programming',
-    'Crystal Methodology',
-    'Feature-Driven Development',
-    'Joint Application Development',
-    'Rapid Application Development',
-    'Spiral Model',
-    'V-Model',
-    'Waterfall Model',
-    'Prototyping Model',
-    'Incremental Model',
-    'Iterative Model',
-    'Agile Model',
-    'Scrum Framework',
-    'Kanban Framework',
-    'Lean Framework',
-    'Extreme Programming Framework',
-    'Crystal Framework',
-    'Feature-Driven Development Framework',
-    'Joint Application Development Framework',
-    'Rapid Application Development Framework',
-    'Spiral Framework',
-    'V-Framework',
-    'Waterfall Framework',
-    'Prototyping Framework',
-    'Incremental Framework',
-    'Iterative Framework',
-    'Agile Framework',
-    'Scrum Master',
-    'Product Owner',
-    'Development Team',
-    'Stakeholder',
-    'User Story',
-    'Epic',
-    'Theme',
-    'Sprint',
-    'Product Backlog',
-    'Sprint Backlog',
-    'Increment',
-    'Definition of Done',
-    'Burn-Down Chart',
-    'Burn-Up Chart',
-    'Scrum of Scrums',
-    'Daily Scrum',
-    'Sprint Planning',
-    'Sprint Review',
-    'Sprint Retrospective',
-    'Product Backlog Refinement',
-    'Velocity',
-    'Story Points',
-    'Planning Poker',
-    'T-Shirt Sizes',
-    'Ideal Days',
-    'Hours',
-    'Affinity Estimating',
-    'Ordering Product Backlog',
-    'DEEP',
-    'Ready',
-    'User Story Mapping',
-    'Impact Mapping',
-    'Kano Model',
-    'Minimal Viable Product',
-    'Minimal Marketable Feature',
-    'Spike',
-    'Technical Debt',
-    'Product Vision',
-    'Product Roadmap',
-    'Release Planning',
-    'Agile Testing',
-    'Test-First Programming',
-    'Acceptance Test-Driven Development',
-    'Behavior-Driven Development',
-    'Specification by Example',
-    'Exploratory Testing',
-    'Testing Quadrants',
-    'Automated Testing',
-  ];
-  sectionTitleItems: SelectItem[] = this.sectionTitles.map((title) => ({
-    label: title,
-    value: title,
-  }));
+  unsavedChanges: boolean = false;
+  sectionTitles: SectionTitle[] = [];
+  sectionTitleItems: SelectItem[] = [];
   filteredSectionTitleItems: SelectItem[] = [];
   selectedSection: string = '';
   isAdminOrHr: boolean = false;
@@ -223,6 +44,7 @@ export class CreateinterviewscoredocumentComponent
   candidatePosition: Position | null = null;
   displayEditSectionDialog: boolean = false;
   editSectionForm: FormGroup = new FormGroup({});
+  documentLocked: boolean = false;
 
   constructor(
     private router: Router,
@@ -234,37 +56,22 @@ export class CreateinterviewscoredocumentComponent
     private candidateService: CandidatesService,
     private positionService: PositionsService,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private sectionTitleService: SectiontitleService
   ) {}
 
   ngOnInit(): void {
-    this.loadState();
     this.getCandidateIdFromRoute();
     this.loadCandidateData();
     this.getCurrentUser();
     this.initializeAddSectionForm();
     this.initializeEditSectionForm();
+    this.initializeSectionTitles();
   }
 
   ngOnDestroy(): void {
-    this.saveState([]);
     this.unsubscribe$.next();
     this.unsubscribe$.complete();
-  }
-
-  saveState(sections: Section[]): void {
-    const state = {
-      sections: sections,
-    };
-    localStorage.setItem('interviewState', JSON.stringify(state));
-  }
-
-  loadState(): void {
-    const state = localStorage.getItem('interviewState');
-    if (state) {
-      const parsedState = JSON.parse(state);
-      this.sections = parsedState.sections;
-    }
   }
 
   getCurrentUser(): void {
@@ -273,8 +80,29 @@ export class CreateinterviewscoredocumentComponent
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.userData = user;
-        this.isAdminOrHr =
-          this.roleService.isAdmin() || this.roleService.isHR();
+        this.isAdminOrHr = this.roleService.isUserAdminOrHr();
+      });
+  }
+
+  private initializeSectionTitles(): void {
+    this.sectionTitleService
+      .getAllSectionTitles()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((sectionTitles) => {
+        this.sectionTitles = sectionTitles.filter(
+          (title) => !title.title.includes('General Feedback')
+        );
+
+        if (this.isAdminOrHr) {
+          this.sectionTitles.push({ title: 'General Feedback - HR' });
+        } else {
+          this.sectionTitles.push({ title: 'General Feedback - DEV' });
+        }
+
+        this.sectionTitleItems = this.sectionTitles.map((sectionTitle) => ({
+          label: sectionTitle.title,
+          value: sectionTitle.title,
+        }));
       });
   }
 
@@ -297,7 +125,17 @@ export class CreateinterviewscoredocumentComponent
   }
 
   goBack(): void {
-    this.saveState([]);
+    if (this.unsavedChanges) {
+      this.confirmationService.confirm({
+        message:
+          'Are you sure you want to leave this page? All unsaved changes will be lost.',
+        header: 'Confirmation',
+        icon: 'pi pi-exclamation-triangle',
+        accept: () => {
+          this.router.navigate(['/candidates']);
+        },
+      });
+    }
     this.router.navigate(['/candidates']);
   }
 
@@ -357,8 +195,8 @@ export class CreateinterviewscoredocumentComponent
         interviewers: interviewers,
       };
       this.sections.push(section);
+      this.unsavedChanges = true;
 
-      this.saveState(this.sections);
       this.resetAddSectionDialog();
     }
   }
@@ -377,134 +215,132 @@ export class CreateinterviewscoredocumentComponent
   }
 
   saveSections(): void {
-    const numberOfSections: number = this.sections.length;
-    let totalScore: number = 0;
-    this.sections.forEach((section) => {
-      section.interviewers.forEach((interviewer) => {
-        totalScore += interviewer.score;
-      });
-    });
+    const userRole: string = this.userData?.role!!;
+    let requiredFeedbackTitle: string;
 
-    if (numberOfSections > 0) {
-      const finalScore: number = totalScore / numberOfSections;
-      const positionName: string = this.candidatePosition?.name!!;
-      const interviewDate: string =
-        this.candidate?.interviewDate || new Date().toISOString();
-      const lastUpdate: string = new Date().toISOString();
-
-      const interviewScoreDocument: InterviewScoreDocument = {
-        sections: this.sections,
-        interviewDate: interviewDate,
-        lastUpdate: lastUpdate,
-        finalScore: finalScore,
-        roleAppliedFor: positionName,
-        candidateId: this.candidateId,
-      };
-
-      this.confirmationService.confirm({
-        message: 'Are you sure you want to save the score document?',
-        accept: () => {
-          this.interviewScoreDocumentService
-            .createInterviewScoreDocument(interviewScoreDocument)
-            .pipe(takeUntil(this.unsubscribe$))
-            .subscribe({
-              next: (response) => {
-                const updatedCandidate: Candidate = {
-                  id: this.candidateId,
-                  name: this.candidate?.name!!,
-                  phoneNumber: this.candidate?.phoneNumber!!,
-                  cvLink: this.candidate?.cvLink!!,
-                  email: this.candidate?.email!!,
-                  interviewDate: this.candidate?.interviewDate!!,
-                  documentId: response?.id!!,
-                  assignedTo: this.candidate?.assignedTo!!,
-                  positionId: this.candidate?.positionId!!,
-                };
-
-                this.candidateService
-                  .updateCandidate(this.candidateId, updatedCandidate)
-                  .subscribe({
-                    next: () => {
-                      this.messageService.add({
-                        severity: 'success',
-                        summary: 'Success',
-                        detail:
-                          'Document saved and candidate updated successfully!',
-                      });
-                      setTimeout(() => {
-                        this.router.navigate(['/candidates']);
-                      }, 2000);
-                    },
-                    error: (error) => {
-                      let detail = 'An error occurred. Please try again later.';
-                      if (error instanceof HttpErrorResponse) {
-                        console.error('Error adding candidate:', error.message);
-                        switch (error.status) {
-                          case 400:
-                            detail = error.error.message;
-                            break;
-                          case 401:
-                            detail =
-                              'You are not authorized to perform this action.';
-                            break;
-                          case 403:
-                            detail =
-                              'You are forbidden from performing this action.';
-                            break;
-                          case 404:
-                            detail = 'The resource was not found.';
-                            break;
-                          case 409:
-                            detail = 'The position already exists.';
-                            break;
-                        }
-                      }
-                      this.messageService.add({
-                        severity: 'error',
-                        summary: 'Failed to add candidate',
-                        detail: detail,
-                      });
-                    },
-                  });
-              },
-              error: (error) => {
-                let detail = 'An error occurred. Please try again later.';
-                if (error instanceof HttpErrorResponse) {
-                  console.error('Error adding candidate:', error.message);
-                  switch (error.status) {
-                    case 400:
-                      detail = error.error.message;
-                      break;
-                    case 401:
-                      detail = 'You are not authorized to perform this action.';
-                      break;
-                    case 403:
-                      detail = 'You are forbidden from performing this action.';
-                      break;
-                    case 404:
-                      detail = 'The resource was not found.';
-                      break;
-                    case 409:
-                      detail = 'The position already exists.';
-                      break;
-                  }
-                }
-                this.messageService.add({
-                  severity: 'error',
-                  summary: 'Failed to add candidate',
-                  detail: detail,
-                });
-              },
-            });
-        },
-      });
+    if (userRole === 'admin' || userRole === 'HR') {
+      requiredFeedbackTitle = 'General Feedback - HR';
     } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Please add at least one section to save the score document',
-      });
+      requiredFeedbackTitle = 'General Feedback - DEV';
     }
+
+    const hasRequiredGeneralFeedback = this.sections.some(
+      (section) => section.title === requiredFeedbackTitle
+    );
+
+    if (this.sections.length === 0) {
+      this.showMessage(
+        'error',
+        'Error',
+        'Please add at least one section to save the score document'
+      );
+      return;
+    } else if (!hasRequiredGeneralFeedback) {
+      this.showMessage(
+        'warn',
+        'Missing Section',
+        `Please add a "${requiredFeedbackTitle}" section before saving.`
+      );
+      return;
+    }
+
+    const totalScore: number = this.calculateTotalScore();
+    const finalScore: number = totalScore / this.sections.length;
+    const interviewScoreDocument: InterviewScoreDocument =
+      this.createInterviewScoreDocument(finalScore);
+
+    this.confirmAndSaveDocument(interviewScoreDocument);
+  }
+
+  private calculateTotalScore(): number {
+    return this.sections.reduce(
+      (total, section) =>
+        total +
+        section.interviewers.reduce(
+          (sum, interviewer) => sum + interviewer.score,
+          0
+        ),
+      0
+    );
+  }
+
+  private createInterviewScoreDocument(
+    finalScore: number
+  ): InterviewScoreDocument {
+    const positionName: string = this.candidatePosition?.name!;
+    const interviewDate: string =
+      this.candidate?.interviewDate || new Date().toISOString();
+    const lastUpdate: string = new Date().toISOString();
+    return {
+      sections: this.sections,
+      interviewDate: interviewDate,
+      lastUpdate: lastUpdate,
+      finalScore: finalScore,
+      roleAppliedFor: positionName,
+      candidateId: this.candidateId,
+      status: InterviewDocumentStatus.NEW,
+    };
+  }
+
+  private confirmAndSaveDocument(
+    interviewScoreDocument: InterviewScoreDocument
+  ): void {
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to save the score document?',
+      accept: () => {
+        this.unsavedChanges = false;
+        this.interviewScoreDocumentService
+          .createInterviewScoreDocument(interviewScoreDocument)
+          .pipe(takeUntil(this.unsubscribe$))
+          .subscribe({
+            next: (response) => this.updateCandidate(response),
+            error: (error) =>
+              this.handleError(error, 'Failed to create score document'),
+          });
+      },
+    });
+  }
+
+  private updateCandidate(response: any): void {
+    const updatedCandidate: Candidate = {
+      id: this.candidateId,
+      name: this.candidate?.name!!,
+      phoneNumber: this.candidate?.phoneNumber!!,
+      cvLink: this.candidate?.cvLink!!,
+      email: this.candidate?.email!!,
+      interviewDate: this.candidate?.interviewDate!!,
+      documentId: response?.id!!,
+      assignedTo: this.candidate?.assignedTo!!,
+      positionId: this.candidate?.positionId!!,
+    };
+    this.candidateService
+      .updateCandidate(this.candidateId, updatedCandidate)
+      .subscribe({
+        next: () => {
+          this.showMessage(
+            'success',
+            'Success',
+            'Document saved and candidate updated successfully!'
+          );
+          setTimeout(() => {
+            this.router.navigate(['/candidates']);
+          }, 2000);
+        },
+        error: (error) => this.handleError(error, 'Failed to update candidate'),
+      });
+  }
+
+  private handleError(error: any, context: string): void {
+    let detail = 'An error occurred. Please try again later.';
+    if (error instanceof HttpErrorResponse) {
+      console.error(error);
+      detail = error.error.message!! || detail;
+    }
+    this.showMessage('error', context, detail);
+  }
+
+  private showMessage(severity: string, summary: string, detail: string): void {
+    this.messageService.add({ severity, summary, detail });
   }
 
   editSection(section: Section): void {
@@ -525,7 +361,6 @@ export class CreateinterviewscoredocumentComponent
       accept: () => {
         const index: number = this.sections.indexOf(section);
         this.sections.splice(index, 1);
-        this.saveState(this.sections);
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
@@ -555,7 +390,6 @@ export class CreateinterviewscoredocumentComponent
         (s) => s.title === section.title
       );
       this.sections[index] = section;
-      this.saveState(this.sections);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
@@ -568,6 +402,14 @@ export class CreateinterviewscoredocumentComponent
         summary: 'Error',
         detail: 'Please fill in all the required fields',
       });
+    }
+  }
+
+  @HostListener('window:beforeunload', ['$event'])
+  confirmExit(event: BeforeUnloadEvent): void {
+    if (this.unsavedChanges) {
+      event.returnValue = true;
+      event.preventDefault();
     }
   }
 }

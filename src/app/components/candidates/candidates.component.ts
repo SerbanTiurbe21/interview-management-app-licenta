@@ -18,13 +18,14 @@ import { RetrievedUser } from 'src/app/interfaces/user/retrieveduser.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { PositionStatus } from 'src/app/interfaces/positionstatus.enum';
 import { Router } from '@angular/router';
+import { InterviewscoredocumentService } from 'src/app/services/interviewscoredocument.service';
 
 const phoneRegex =
   /^(\+4|)?(07[0-8]{1}[0-9]{1}|02[0-9]{2}|03[0-9]{2}){1}?(\s|\.|\-)?([0-9]{3}(\s|\.|\-|)){2}$/;
 const cvLinkRegex =
   /^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)(?:\.(?:[a-z\u00a1-\uffff0-9]-*)*[a-z\u00a1-\uffff0-9]+)*(?:\.(?:[a-z\u00a1-\uffff]{2,})))(?::\d{2,5})?(?:[/?#]\S*)?$/i;
 const dateRegex =
-  /[1-9][0-9][0-9]{2}-([0][1-9]|[1][0-2])-([1-2][0-9]|[0][1-9]|[3][0-1])/; // Matches date in YYYY-MM-DD format
+  /[1-9][0-9][0-9]{2}-([0][1-9]|[1][0-2])-([1-2][0-9]|[0][1-9]|[3][0-1])/;
 const positionNameRegex = /^(.+)\s-\s(.+)$/;
 
 @Component({
@@ -65,25 +66,46 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
-    private router: Router
+    private router: Router,
+    private interviewScoreDocumentService: InterviewscoredocumentService
   ) {
     this.today = new Date();
     this.today.setHours(0, 0, 0, 0);
   }
 
   ngOnInit(): void {
-    this.initializeCandidateForm();
-    this.initializeEditCandidateForm();
-    this.initializeAddPositionForm();
-    this.retrieveOpenAndInProgressPositions();
-    this.retrieveAllPositions();
+    this.initializeUserData();
+    // this.initializeCandidateForm();
+    // this.initializeEditCandidateForm();
+    // this.initializeAddPositionForm();
+    // this.retrieveOpenAndInProgressPositions();
+    // this.retrieveAllPositions();
+    this.loadCandidatesBasedOnRole();
+    // this.loadAllDevelopers();
+    // this.loadDevelopers();
+    // this.loadCandidatesDocuments();
+  }
+
+  private initializeUserData(): void {
     this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.userData = user;
+        if (this.isUserAdminOrHr()) {
+          this.adminOrHrSetup();
+        } else {
+          this.retrieveAllPositions();
+        }
       });
-    this.loadCandidatesBasedOnRole();
+  }
+
+  private adminOrHrSetup(): void {
+    this.initializeCandidateForm();
+    this.initializeEditCandidateForm();
+    this.initializeAddPositionForm();
+    this.retrieveOpenAndInProgressPositions();
+    this.retrieveAllPositions();
     this.loadAllDevelopers();
     this.loadDevelopers();
   }
@@ -117,25 +139,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
-  // showEditCandidateDialog(candidate: Candidate): void {
-  //   const positionName: string = this.getPositionNameById(
-  //     candidate.positionId!
-  //   );
-  //   const developerName: string = this.getDeveloperNameById(
-  //     candidate.assignedTo!
-  //   );
-  //   this.editCandidateForm.reset({
-  //     name: candidate.name,
-  //     email: candidate.email,
-  //     phoneNumber: candidate.phoneNumber,
-  //     cvLink: candidate.cvLink,
-  //     interviewDate: candidate.interviewDate,
-  //     position: positionName, // Ensure this matches your position selection mechanism
-  //     assignedTo: developerName, // Update logic to handle showing the assigned person's name or ID
-  //   });
-  //   this.displayEditCandidateDialog = true;
-  // }
-
   showEditCandidateDialog(candidate: Candidate): void {
     if (!this.allDevelopers.length) {
       this.loadAllDevelopers();
@@ -149,7 +152,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     const positionName = this.getPositionNameById(candidate.positionId!);
     const developerName = this.getDeveloperNameById(candidate.assignedTo!);
 
-    this.selectedDeveloperId = candidate.assignedTo!!; // Store the current developer ID
+    this.selectedDeveloperId = candidate.assignedTo!!;
 
     this.editCandidateForm.setValue({
       name: candidate.name,
@@ -295,7 +298,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
           error: (error) => {
             let detail = 'An error occurred. Please try again later.';
             if (error instanceof HttpErrorResponse) {
-              console.error('Error updating candidate:', error.message);
               switch (error.status) {
                 case 400:
                   detail = error.error.message;
@@ -332,7 +334,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   confirmDeleteCandidate(candidate: Candidate): void {
     this.confirmationService.confirm({
-      message: 'Are you sure you want to delete this candidate?',
+      message:
+        'Are you sure you want to delete this candidate and all associated data?',
       header: 'Delete Confirmation',
       icon: 'pi pi-exclamation-triangle',
       accept: () => {
@@ -348,6 +351,14 @@ export class CandidatesComponent implements OnInit, OnDestroy {
           this.candidatesService
             .deleteCandidate(candidate.id)
             .pipe(
+              switchMap(() => {
+                if (candidate.documentId) {
+                  return this.interviewScoreDocumentService.deleteInterviewById(
+                    candidate.documentId
+                  );
+                }
+                return of(null);
+              }),
               switchMap(() =>
                 this.candidatesService.getCandidateByPositionId(
                   candidate.positionId!!
@@ -355,17 +366,19 @@ export class CandidatesComponent implements OnInit, OnDestroy {
               ),
               switchMap((remainingCandidates) => {
                 if (remainingCandidates.length === 0) {
-                  // If no candidates are left, update the position to 'Open'
                   return this.positionsService.updatePosition(
                     candidate.positionId!!,
                     updatedPosition
                   );
                 }
-                return of(null); // No need to update if there are still candidates
+                return of(null);
               }),
               switchMap(() =>
-                this.positionsService.getPositionsByStatus('OPEN')
-              ), // Reload open positions
+                this.positionsService.getPositionsByStatuses(
+                  'OPEN',
+                  'IN_PROGRESS'
+                )
+              ),
               takeUntil(this.unsubscribe$)
             )
             .subscribe({
@@ -376,9 +389,9 @@ export class CandidatesComponent implements OnInit, OnDestroy {
                   detail:
                     'Candidate deleted successfully! Position updated as needed.',
                 });
-                this.positions = positions; // Update positions list in the UI
-                this.loadCandidatesBasedOnRole(); // Reload the list to reflect the change
-                this.loadDevelopers(); // Load developers after deletion is finalized
+                this.positions = positions;
+                this.loadCandidatesBasedOnRole();
+                this.loadDevelopers();
               },
               error: (error) => {
                 let detail = 'An error occurred. Please try again later.';
@@ -423,18 +436,16 @@ export class CandidatesComponent implements OnInit, OnDestroy {
       .pipe(
         takeUntil(this.unsubscribe$),
         switchMap((candidates) => {
-          // Store candidates information first
           this.filteredCandidates = candidates;
           this.candidates = candidates;
 
-          // Then fetch positions
           return this.positionsService.getAllPositions().pipe(
             takeUntil(this.unsubscribe$),
             map((positions) =>
               positions
                 .map((pos) => ({
-                  label: pos.name, // human-readable name
-                  value: pos.id, // unique identifier
+                  label: pos.name,
+                  value: pos.id,
                 }))
                 .filter((option) =>
                   candidates.some(
@@ -458,9 +469,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   getCandidatesAssignedToDeveloper(): void {
     this.candidatesService
-      .getCandidatesAssignedToDeveloper(
-        JSON.parse(localStorage.getItem('userData') as string).id
-      )
+      .getCandidatesAssignedToDeveloper(this.userData?.id!!)
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((candidates) => {
         this.candidates = candidates;
@@ -477,7 +486,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
         interviewDate: this.addCandidateForm.get('interviewDate')?.value,
         documentId: null,
         assignedTo: this.selectedDeveloperId,
-        positionId: this.addCandidateForm.get('position')?.value?.id, // Ensure you're sending the position ID
+        positionId: this.addCandidateForm.get('position')?.value?.id,
       };
 
       if (this.newCandidate.positionId) {
@@ -515,7 +524,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             error: (error) => {
               let detail = 'An error occurred. Please try again later.';
               if (error instanceof HttpErrorResponse) {
-                console.error('Error adding candidate:', error.message);
                 switch (error.status) {
                   case 400:
                     detail = error.error.message;
@@ -692,7 +700,6 @@ export class CandidatesComponent implements OnInit, OnDestroy {
           error: (error) => {
             let detail = 'An error occurred. Please try again later.';
             if (error instanceof HttpErrorResponse) {
-              console.error('Error adding candidate:', error.message);
               switch (error.status) {
                 case 400:
                   detail = error.error.message;
@@ -713,7 +720,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             }
             this.messageService.add({
               severity: 'error',
-              summary: 'Failed to add candidate',
+              summary: 'Failed to add position',
               detail: detail,
             });
           },
