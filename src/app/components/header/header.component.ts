@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { MenuItem } from 'primeng/api';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subject, of, switchMap, takeUntil, tap } from 'rxjs';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { AuthService } from 'src/app/services/auth.service';
 import { RoleService } from 'src/app/services/role.service';
@@ -13,7 +13,7 @@ import { ThemeService } from 'src/app/services/theme.service';
   styleUrls: ['./header.component.css'],
 })
 export class HeaderComponent implements OnInit, OnDestroy {
-  isAdminOrHr: boolean = false;
+  activeUser: StoredUser | null = null;
   items: MenuItem[] = [];
   private unsubscribe$ = new Subject<void>();
   storedUser: StoredUser | null = null;
@@ -21,20 +21,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private themeService: ThemeService,
-    private roleService: RoleService
+    private themeService: ThemeService
   ) {}
 
   ngOnInit(): void {
     this.authService
-      .getActiveUser()
+      .watchUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
-        this.storedUser = user;
-        this.isAdminOrHr = this.roleService.isUserAdminOrHr();
-        // setTimeout(() => {
-        this.setupMenu(user, this.isAdminOrHr);
-        // }, 10);
+        this.activeUser = user;
+        this.setupMenu(this.activeUser);
       });
   }
 
@@ -51,57 +47,51 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (currentTheme && currentTheme.includes('light')) {
       this.themeService.switchTheme('bootstrap4-dark-blue');
     }
-    this.setupMenu(this.storedUser, this.isAdminOrHr);
+    this.setupMenu(this.storedUser);
   }
 
-  setupMenu(user: StoredUser | null, isAdmin: boolean): void {
+  setupMenu(user: StoredUser | null): void {
     this.items = [
       {
         label: 'Home',
         icon: 'pi pi-fw pi-home',
-        command: () => {
-          this.router.navigate(['/home']);
-        },
+        command: () => this.router.navigate(['/home']),
       },
     ];
 
     if (user) {
+      const interviewItems: MenuItem[] = [
+        {
+          label: 'Candidates',
+          icon: 'pi pi-fw pi-user',
+          command: () => this.router.navigate(['/candidates']),
+        },
+        {
+          label: 'Topics and Questions',
+          icon: 'pi pi-fw pi-question',
+          command: () => this.router.navigate(['/topics']),
+        },
+        {
+          label: 'Positions',
+          icon: 'pi pi-fw pi-briefcase',
+          command: () => this.router.navigate(['/positions']),
+        },
+      ];
+
+      if (this.activeUser?.role === 'admin') {
+        interviewItems.push({
+          label: 'User Management',
+          icon: 'pi pi-fw pi-users',
+          command: () => this.router.navigate(['/users']),
+        });
+      }
+
       this.items.push({
         label: 'Interview Management',
         icon: 'pi pi-fw pi-briefcase',
-        items: [
-          {
-            label: 'Candidates',
-            icon: 'pi pi-fw pi-user',
-            command: () => {
-              this.router.navigate(['/candidates']);
-            },
-          },
-          {
-            label: 'Topics and Questions',
-            icon: 'pi pi-fw pi-question',
-            command: () => {
-              this.router.navigate(['/topics']);
-            },
-          },
-          {
-            label: 'Positions',
-            icon: 'pi pi-fw pi-briefcase',
-            command: () => {
-              this.router.navigate(['/positions']);
-            },
-          },
-        ],
+        items: interviewItems,
       });
-      isAdmin
-        ? this.items.push({
-            label: 'User Management',
-            icon: 'pi pi-fw pi-users',
-            command: () => {
-              this.router.navigate(['/users']);
-            },
-          })
-        : {};
+
       this.addThemeItem();
       this.items.push({
         label: 'Account',
@@ -110,9 +100,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
           {
             label: 'Profile',
             icon: 'pi pi-fw pi-user',
-            command: () => {
-              this.router.navigate(['/profile']);
-            },
+            command: () => this.router.navigate(['/profile']),
           },
           {
             label: 'Logout',
@@ -125,19 +113,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.items.push({
         label: 'Login',
         icon: 'pi pi-fw pi-sign-in',
-        command: () => {
-          this.router.navigate(['/login']);
-        },
+        command: () => this.router.navigate(['/login']),
       });
-    }
-
-    if (!user) {
       this.items.push({
         label: 'Register',
         icon: 'pi pi-fw pi-user-plus',
-        command: () => {
-          this.router.navigate(['/register']);
-        },
+        command: () => this.router.navigate(['/register']),
       });
       this.addThemeItem();
     }
@@ -154,15 +135,15 @@ export class HeaderComponent implements OnInit, OnDestroy {
     });
   }
 
-  private addUserManagementItem(): void {
-    if (this.isAdminOrHr) {
-      this.items.push({
-        label: 'User Management',
-        icon: 'pi pi-fw pi-users',
-        command: () => {
-          this.router.navigate(['/users']);
-        },
-      });
-    }
-  }
+  // private addUserManagementItem(): void {
+  //   if (this.isAdminOrHr) {
+  //     this.items.push({
+  //       label: 'User Management',
+  //       icon: 'pi pi-fw pi-users',
+  //       command: () => {
+  //         this.router.navigate(['/users']);
+  //       },
+  //     });
+  //   }
+  // }
 }

@@ -5,5 +5,5 @@ export interface Position {
   id?: string;
   name: string;
   status: PositionStatus;
-  subStatus?: PositionSubStatus;
+  subStatus?: PositionSubStatus | null;
 }

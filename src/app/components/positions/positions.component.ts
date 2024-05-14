@@ -222,17 +222,17 @@ export class PositionsComponent implements OnInit, OnDestroy {
 
   getStatusIcon(status: string, subStatus?: string): string {
     if (status === 'OPEN') {
-      return 'pi-circle-on'; // Example: PrimeIcons CIRCLE_ON represents open/active
-    } else if (status === 'IN PROGRESS') {
-      return 'pi-spin pi-spinner'; // Spinner icon for ongoing processes
+      return 'pi-circle-on';
+    } else if (status === 'IN_PROGRESS') {
+      return 'pi-spin pi-spinner';
     } else if (status === 'CLOSED') {
-      if (subStatus === 'FILLED_UP') {
-        return 'pi-check-circle'; // Check circle for successful completion
+      if (subStatus === 'FILLED') {
+        return 'pi-check-circle';
       } else if (subStatus === 'CANCELLED') {
-        return 'pi-times-circle'; // Times circle for cancellation
+        return 'pi-times-circle';
       }
     }
-    return ''; // Default fallback if no specific icon is needed
+    return '';
   }
 
   updatePosition(): void {

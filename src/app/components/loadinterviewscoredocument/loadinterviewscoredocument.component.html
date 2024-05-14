@@ -278,5 +278,48 @@
   </form>
 </p-dialog>
 
+<p-dialog
+  header="Add New Section Title"
+  [(visible)]="displayAddSectionTitleDialog"
+  [style]="{ width: '20vw', height: 'auto' }"
+  [draggable]="false"
+  [resizable]="false"
+  [modal]="true"
+  (onHide)="resetAddSectionTitleDialog()"
+>
+  <form [formGroup]="addSectionTitleForm" class="p-fluid">
+    <div class="p-field mb-3">
+      <label for="sectionTitle">Section Title</label>
+      <input
+        id="sectionTitle"
+        type="text"
+        pInputText
+        formControlName="sectionTitle"
+        placeholder="Enter section title"
+      />
+      <small
+        *ngIf="
+          addSectionTitleForm.get('sectionTitle')?.invalid &&
+          (addSectionTitleForm.get('sectionTitle')?.dirty ||
+            addSectionTitleForm.get('sectionTitle')?.touched)
+        "
+        class="p-error"
+      >
+        Section title is required.
+      </small>
+    </div>
+    <div class="flex justify-content-center mt-3">
+      <button
+        pButton
+        label="Add"
+        type="button"
+        (click)="saveNewSectionTitle()"
+        [disabled]="addSectionTitleForm.invalid"
+        class="p-button-sm w-6 p-mt-2"
+      ></button>
+    </div>
+  </form>
+</p-dialog>
+
 <p-toast position="top-center"></p-toast>
 <p-confirmDialog></p-confirmDialog>

@@ -19,6 +19,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { PositionStatus } from 'src/app/interfaces/positionstatus.enum';
 import { Router } from '@angular/router';
 import { InterviewscoredocumentService } from 'src/app/services/interviewscoredocument.service';
+import { InterviewDocumentStatus } from 'src/app/interfaces/interviewscoredocument/interviewdocumentstatus.model';
 
 const phoneRegex =
   /^(\+4|)?(07[0-8]{1}[0-9]{1}|02[0-9]{2}|03[0-9]{2}){1}?(\s|\.|\-)?([0-9]{3}(\s|\.|\-|)){2}$/;
@@ -34,6 +35,8 @@ const positionNameRegex = /^(.+)\s-\s(.+)$/;
   styleUrls: ['./candidates.component.css'],
 })
 export class CandidatesComponent implements OnInit, OnDestroy {
+  uniquePositionNames: SelectItem[] = [];
+  lastAddedPositionPosition: Position | null = null;
   initialUpdateCandidateFormValues: any = {};
   allDevelopers: RetrievedUser[] = [];
   selectedCandidate: Candidate | null = null;
@@ -75,15 +78,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.initializeUserData();
-    // this.initializeCandidateForm();
-    // this.initializeEditCandidateForm();
-    // this.initializeAddPositionForm();
-    // this.retrieveOpenAndInProgressPositions();
-    // this.retrieveAllPositions();
     this.loadCandidatesBasedOnRole();
-    // this.loadAllDevelopers();
-    // this.loadDevelopers();
-    // this.loadCandidatesDocuments();
   }
 
   private initializeUserData(): void {
@@ -210,6 +205,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
       documentId: null,
       assignedTo: null,
       positionId: null,
+      isHired: false,
     };
   }
 
@@ -279,6 +275,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
         documentId: this.selectedCandidate.documentId,
         assignedTo: newDeveloperId,
         positionId: newPositionId,
+        isHired: this.selectedCandidate.isHired,
       };
 
       this.candidatesService
@@ -344,8 +341,9 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             ...this.positions.find(
               (position) => position.id === candidate.positionId
             ),
-            status: PositionStatus.OPEN,
             name: this.getPositionNameById(candidate.positionId),
+            status: PositionStatus.OPEN,
+            subStatus: null,
           };
 
           this.candidatesService
@@ -430,41 +428,96 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     });
   }
 
+  // getAllCandidates(): void {
+  //   this.candidatesService
+  //     .getAllCandidates()
+  //     .pipe(
+  //       takeUntil(this.unsubscribe$),
+  //       switchMap((candidates) => {
+  //         this.filteredCandidates = candidates;
+  //         this.candidates = candidates;
+  //         this.extractUniquePositions();
+
+  //         candidates.forEach((candidate) => {
+  //           if (candidate.documentId) {
+  //             this.interviewScoreDocumentService
+  //               .getFormattedInterviewById(candidate.documentId)
+  //               .pipe(takeUntil(this.unsubscribe$))
+  //               .subscribe((document) => {
+  //                 candidate.finalScore = document.finalScore;
+  //               });
+  //           }
+  //         });
+
+  //         return this.positionsService.getAllPositions().pipe(
+  //           takeUntil(this.unsubscribe$),
+  //           map((positions) =>
+  //             positions
+  //               .map((pos) => ({
+  //                 label: pos.name,
+  //                 value: pos.id,
+  //               }))
+  //               .filter((option) =>
+  //                 candidates.some(
+  //                   (candidate) =>
+  //                     this.getPositionNameById(candidate?.positionId!) ===
+  //                     option.label
+  //                 )
+  //               )
+  //           )
+  //         );
+  //       })
+  //     )
+  //     .subscribe({
+  //       next: (positionOptions) => {
+  //         this.uniquePositions = positionOptions;
+  //       },
+  //       error: (error) => {
+  //         console.error('Error fetching candidates or positions:', error);
+  //       },
+  //       complete: () => console.log('Position fetching completed'),
+  //     });
+  // }
+
   getAllCandidates(): void {
     this.candidatesService
       .getAllCandidates()
-      .pipe(
-        takeUntil(this.unsubscribe$),
-        switchMap((candidates) => {
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe({
+        next: (candidates) => {
           this.filteredCandidates = candidates;
           this.candidates = candidates;
+          this.extractUniquePositions();
 
-          return this.positionsService.getAllPositions().pipe(
-            takeUntil(this.unsubscribe$),
-            map((positions) =>
-              positions
-                .map((pos) => ({
-                  label: pos.name,
-                  value: pos.id,
-                }))
-                .filter((option) =>
-                  candidates.some(
-                    (candidate) => candidate.positionId === option.value
-                  )
-                )
-            )
-          );
-        })
-      )
-      .subscribe({
-        next: (positionOptions) => {
-          this.uniquePositions = positionOptions;
+          candidates.forEach((candidate) => {
+            if (candidate.documentId) {
+              this.interviewScoreDocumentService
+                .getFormattedInterviewById(candidate.documentId)
+                .pipe(takeUntil(this.unsubscribe$))
+                .subscribe((document) => {
+                  candidate.finalScore = document.finalScore;
+                  candidate.documentStatus = document.status;
+                });
+            }
+          });
         },
         error: (error) => {
-          console.error('Error fetching candidates or positions:', error);
+          console.error('Error fetching candidates:', error);
         },
-        complete: () => console.log('Position fetching completed'),
       });
+  }
+
+  extractUniquePositions(): void {
+    const positionNames = new Set(
+      this.candidates.map((candidate) =>
+        this.getPositionNameById(candidate?.positionId!)
+      )
+    );
+    console.log('Position names:', positionNames);
+    this.uniquePositionNames = Array.from(positionNames).map((name) => ({
+      label: name,
+      value: name,
+    }));
   }
 
   getCandidatesAssignedToDeveloper(): void {
@@ -477,6 +530,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
   }
 
   saveNewCandidate(): void {
+    console.log(this.addCandidateForm.value);
     if (this.addCandidateForm.valid) {
       this.newCandidate = {
         name: this.addCandidateForm.get('name')?.value,
@@ -487,6 +541,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
         documentId: null,
         assignedTo: this.selectedDeveloperId,
         positionId: this.addCandidateForm.get('position')?.value?.id,
+        isHired: false,
       };
 
       if (this.newCandidate.positionId) {
@@ -550,10 +605,12 @@ export class CandidatesComponent implements OnInit, OnDestroy {
     }
   }
 
-  onPositionFilter(positionId: string): void {
-    if (positionId) {
+  onPositionFilter(positionName: string): void {
+    console.log('Position ID:', positionName);
+    if (positionName) {
       this.filteredCandidates = this.candidates.filter(
-        (candidate) => candidate.positionId === positionId
+        (candidate) =>
+          this.getPositionNameById(candidate?.positionId!) === positionName
       );
     } else {
       this.filteredCandidates = [...this.candidates];
@@ -678,6 +735,7 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   addPosition(): void {
     if (this.addPositionForm.valid) {
+      console.log(this.addPositionForm.value);
       const newPosition: Position = {
         name: this.addPositionForm.get('name')?.value,
         status: PositionStatus.OPEN,
@@ -686,8 +744,8 @@ export class CandidatesComponent implements OnInit, OnDestroy {
       this.positionsService
         .addPosition(newPosition)
         .pipe(takeUntil(this.unsubscribe$))
-        .subscribe({
-          next: () => {
+        .subscribe((response) => {
+          if (response.id) {
             this.messageService.add({
               severity: 'success',
               summary: 'Position Added',
@@ -695,35 +753,20 @@ export class CandidatesComponent implements OnInit, OnDestroy {
             });
             this.retrieveOpenAndInProgressPositions();
             this.resetAddPositionForm();
-            this.addCandidateForm.get('position')?.setValue(newPosition);
-          },
-          error: (error) => {
-            let detail = 'An error occurred. Please try again later.';
-            if (error instanceof HttpErrorResponse) {
-              switch (error.status) {
-                case 400:
-                  detail = error.error.message;
-                  break;
-                case 401:
-                  detail = 'You are not authorized to perform this action.';
-                  break;
-                case 403:
-                  detail = 'You are forbidden from performing this action.';
-                  break;
-                case 404:
-                  detail = 'The resource was not found.';
-                  break;
-                case 409:
-                  detail = 'The position already exists.';
-                  break;
-              }
-            }
+            this.positions.push(response);
+            this.filteredPositions = [...this.positions];
+            this.retrieveAllPositions();
+            this.addCandidateForm.patchValue({
+              position: response,
+            });
+            console.log('Position added successfully:', response);
+          } else {
             this.messageService.add({
               severity: 'error',
               summary: 'Failed to add position',
-              detail: detail,
+              detail: 'An error occurred. Please try again later.',
             });
-          },
+          }
         });
     }
   }
@@ -740,5 +783,78 @@ export class CandidatesComponent implements OnInit, OnDestroy {
 
   createInterviewScoreDocument(candidate: Candidate): void {
     this.router.navigate(['create-document', { candidate: candidate.id }]);
+  }
+
+  confirmHire(candidate: Candidate): void {
+    this.confirmationService.confirm({
+      message: 'Are you sure you want to hire this candidate?',
+      header: 'Hire Confirmation',
+      icon: 'pi pi-exclamation-triangle',
+      accept: () => {
+        if (candidate?.positionId) {
+          this.positionsService
+            .fillPosition(candidate.positionId, candidate?.id!)
+            .pipe(takeUntil(this.unsubscribe$))
+            .subscribe({
+              next: () => {
+                this.messageService.add({
+                  severity: 'success',
+                  summary: 'Success',
+                  detail: 'Candidate hired successfully!',
+                });
+                this.loadCandidatesBasedOnRole();
+                this.loadDevelopers();
+                this.retrieveOpenAndInProgressPositions();
+                window.location.reload();
+              },
+              error: (error) => {
+                let detail = 'An error occurred. Please try again later.';
+                if (error instanceof HttpErrorResponse) {
+                  switch (error.status) {
+                    case 401:
+                      detail = 'You are not authorized to perform this action.';
+                      break;
+                    case 403:
+                      detail = 'You are forbidden from performing this action.';
+                      break;
+                    case 404:
+                      detail = 'The resource was not found.';
+                      break;
+                    default:
+                      detail = 'Unexpected error occurred.';
+                      break;
+                  }
+                }
+                this.messageService.add({
+                  severity: 'error',
+                  summary: 'Failed to hire candidate',
+                  detail: detail,
+                });
+              },
+            });
+        }
+      },
+      reject: () => {
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Info',
+          detail: 'Hire operation cancelled!',
+        });
+      },
+    });
+  }
+
+  isPositionFilled(positionId: string): boolean {
+    const position = this.allPositions.find((p) => p.id === positionId);
+    return position?.status === 'CLOSED' && position?.subStatus === 'FILLED';
+  }
+
+  shouldShowHireButton(candidate: Candidate): boolean {
+    return (
+      !this.isPositionFilled(candidate?.positionId!) &&
+      !candidate.isHired &&
+      Boolean(candidate.documentId) &&
+      candidate.documentStatus === InterviewDocumentStatus.LOCKED
+    );
   }
 }

@@ -3,10 +3,12 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subject, takeUntil } from 'rxjs';
+import { Candidate } from 'src/app/interfaces/candidate.model';
 import { RetrievedUser } from 'src/app/interfaces/user/retrieveduser.model';
 import { StoredUser } from 'src/app/interfaces/user/storeduser.model';
 import { UpdatedUser } from 'src/app/interfaces/user/updateduser.model';
 import { AuthService } from 'src/app/services/auth.service';
+import { CandidatesService } from 'src/app/services/candidates.service';
 import { UserService } from 'src/app/services/user.service';
 import { roleValidator } from 'src/app/shared/roleValidator.directive';
 
@@ -16,6 +18,7 @@ import { roleValidator } from 'src/app/shared/roleValidator.directive';
   styleUrls: ['./usermanagement.component.css'],
 })
 export class UsermanagementComponent implements OnInit, OnDestroy {
+  candidates: Candidate[] = [];
   currentUserEditingId: string = '';
   userData: StoredUser | null = null;
   userForm: FormGroup = new FormGroup({});
@@ -28,7 +31,8 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private fb: FormBuilder,
-    private authService: AuthService
+    private authService: AuthService,
+    private candidatesService: CandidatesService
   ) {
     this.initializeForm();
   }
@@ -39,13 +43,18 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.initializeUserData();
+    this.loadUsers();
+    this.loadCandidates();
+  }
+
+  private initializeUserData(): void {
     this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.userData = user;
       });
-    this.loadUsers();
   }
 
   initializeForm(): void {
@@ -86,6 +95,15 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
       });
   }
 
+  private loadCandidates(): void {
+    this.candidatesService
+      .getAllCandidates()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((candidates) => {
+        this.candidates = candidates;
+      });
+  }
+
   prioritizeCurrentUser(users: RetrievedUser[]): RetrievedUser[] {
     const index: number = users.findIndex(
       (user) => user.email === this.userData?.email
@@ -115,10 +133,11 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
     ) {
       this.userForm.enable();
 
-      // Admins cannot edit their own username and email
+      // Admins cannot edit their own username and email and role
       if (this.userData?.role === 'admin' && this.userData?.id === user.id) {
         this.userForm.get('username')?.disable();
         this.userForm.get('email')?.disable();
+        this.userForm.get('role')?.disable();
       }
 
       // HR cannot edit their own username and email, but can edit DEVELOPERs
@@ -167,34 +186,32 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
             this.loadUsers();
           },
           error: (error) => {
-            let detail: string = 'An error occurred. Please try again later.';
-            if (error instanceof HttpErrorResponse) {
-              switch (error.status) {
-                case 400:
-                  detail = 'Invalid data. Please check the input data.';
-                  break;
-                case 401:
-                  detail = 'You are not authorized to perform this action.';
-                  break;
-                case 403:
-                  detail = 'You are forbidden from performing this action.';
-                  break;
-                case 404:
-                  detail = 'The resource was not found.';
-                  break;
-              }
-            }
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Login failed',
-              detail: detail,
-            });
+            this.handleHttpError(error);
           },
         });
     }
   }
 
+  canDeleteUser(userId: string): boolean {
+    const hasAssignedCandidates = this.candidates.some(
+      (candidate) =>
+        candidate.assignedTo === userId && candidate.isHired !== true
+    );
+
+    return !hasAssignedCandidates;
+  }
+
   deleteUser(user: RetrievedUser): void {
+    if (!this.canDeleteUser(user.id)) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Cannot Delete User',
+        detail:
+          'This user is currently assigned to one or more candidates and cannot be deleted.',
+      });
+      return;
+    }
+
     this.confirmationService.confirm({
       message: 'Are you sure you want to delete this user?',
       header: 'Delete Confirmation',
@@ -211,33 +228,25 @@ export class UsermanagementComponent implements OnInit, OnDestroy {
                 detail: 'User deleted successfully!',
               });
               this.loadUsers();
+              this.loadCandidates();
             },
             error: (error) => {
-              let detail: string = 'An error occurred. Please try again later.';
-              if (error instanceof HttpErrorResponse) {
-                switch (error.status) {
-                  case 400:
-                    detail = 'Invalid data. Please check the input data.';
-                    break;
-                  case 401:
-                    detail = 'You are not authorized to perform this action.';
-                    break;
-                  case 403:
-                    detail = 'You are forbidden from performing this action.';
-                    break;
-                  case 404:
-                    detail = 'The resource was not found.';
-                    break;
-                }
-              }
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Login failed',
-                detail: detail,
-              });
+              this.handleHttpError(error);
             },
           });
       },
+    });
+  }
+
+  handleHttpError(error: HttpErrorResponse): void {
+    let detail: string = 'An error occurred. Please try again later.';
+    if (error) {
+      detail = error.error.message;
+    }
+    this.messageService.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: detail,
     });
   }
 }

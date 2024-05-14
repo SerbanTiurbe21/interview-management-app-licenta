@@ -43,7 +43,9 @@
     <tr
       [ngClass]="{
         'inactive-position':
-          position.status === 'CLOSED' && position.subStatus === 'CANCELLED'
+          position.status === 'CLOSED' && position.subStatus === 'CANCELLED',
+        'closed-filled':
+          position.status === 'CLOSED' && position.subStatus === 'FILLED'
       }"
     >
       <td class="text-center">{{ position.name }}</td>
@@ -57,6 +59,7 @@
       <td class="text-center">{{ position.subStatus || "N/A" }}</td>
       <td class="text-center" *ngIf="isUserAdminOrHr()">
         <p-button
+          *ngIf="position.status !== 'CLOSED'"
           icon="pi pi-pencil"
           aria-label="Edit position"
           pTooltip="Edit position"

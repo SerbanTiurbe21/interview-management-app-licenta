@@ -19,7 +19,6 @@ import { InterviewscoredocumentService } from 'src/app/services/interviewscoredo
 import { PositionsService } from 'src/app/services/positions.service';
 import { RoleService } from 'src/app/services/role.service';
 import { SectiontitleService } from 'src/app/services/sectiontitle.service';
-
 @Component({
   selector: 'app-createinterviewscoredocument',
   templateUrl: './createinterviewscoredocument.component.html',
@@ -28,6 +27,8 @@ import { SectiontitleService } from 'src/app/services/sectiontitle.service';
 export class CreateinterviewscoredocumentComponent
   implements OnInit, OnDestroy
 {
+  addSectionTitleForm: FormGroup = new FormGroup({});
+  displayAddSectionTitleDialog: boolean = false;
   unsavedChanges: boolean = false;
   sectionTitles: SectionTitle[] = [];
   sectionTitleItems: SelectItem[] = [];
@@ -67,6 +68,7 @@ export class CreateinterviewscoredocumentComponent
     this.initializeAddSectionForm();
     this.initializeEditSectionForm();
     this.initializeSectionTitles();
+    this.initializeAddSectionTitleForm();
   }
 
   ngOnDestroy(): void {
@@ -84,14 +86,18 @@ export class CreateinterviewscoredocumentComponent
       });
   }
 
+  private initializeAddSectionTitleForm(): void {
+    this.addSectionTitleForm = this.fb.group({
+      sectionTitle: ['', Validators.required],
+    });
+  }
+
   private initializeSectionTitles(): void {
     this.sectionTitleService
       .getAllSectionTitles()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((sectionTitles) => {
-        this.sectionTitles = sectionTitles.filter(
-          (title) => !title.title.includes('General Feedback')
-        );
+        this.sectionTitles = sectionTitles;
 
         if (this.isAdminOrHr) {
           this.sectionTitles.push({ title: 'General Feedback - HR' });
@@ -179,6 +185,7 @@ export class CreateinterviewscoredocumentComponent
   }
 
   saveSection(): void {
+    console.log(this.addSectionForm.value);
     if (this.addSectionForm.valid) {
       const interviewerName: string = `${this.userData?.firstName} ${this.userData?.lastName}`;
       const interviewerRole: string = this.userData?.role || '';
@@ -194,6 +201,7 @@ export class CreateinterviewscoredocumentComponent
         title: this.addSectionForm.get('sectionName')?.value?.value,
         interviewers: interviewers,
       };
+      console.log(section);
       this.sections.push(section);
       this.unsavedChanges = true;
 
@@ -202,16 +210,15 @@ export class CreateinterviewscoredocumentComponent
   }
 
   filterSection(event: AutoCompleteCompleteEvent): void {
-    let filtered: SelectItem[] = [];
     let query = event.query;
-
-    for (let i = 0; i < this.sectionTitleItems.length; i++) {
-      let section = this.sectionTitleItems[i];
-      if (section?.label?.toLowerCase().indexOf(query.toLowerCase()) == 0) {
-        filtered.push(section);
-      }
+    this.filteredSectionTitleItems = this.sectionTitleItems.filter((section) =>
+      section?.label?.toLowerCase().includes(event.query.toLowerCase())
+    );
+    if (this.filteredSectionTitleItems.length === 0 || query.trim() !== '') {
+      setTimeout(() => {
+        this.displayAddSectionTitleDialog = true;
+      }, 2000);
     }
-    this.filteredSectionTitleItems = filtered;
   }
 
   saveSections(): void {
@@ -287,6 +294,8 @@ export class CreateinterviewscoredocumentComponent
   ): void {
     this.confirmationService.confirm({
       message: 'Are you sure you want to save the score document?',
+      header: 'Confirmation',
+      icon: 'pi pi-exclamation-triangle',
       accept: () => {
         this.unsavedChanges = false;
         this.interviewScoreDocumentService
@@ -301,7 +310,7 @@ export class CreateinterviewscoredocumentComponent
     });
   }
 
-  private updateCandidate(response: any): void {
+  private updateCandidate(response: InterviewScoreDocument): void {
     const updatedCandidate: Candidate = {
       id: this.candidateId,
       name: this.candidate?.name!!,
@@ -312,6 +321,7 @@ export class CreateinterviewscoredocumentComponent
       documentId: response?.id!!,
       assignedTo: this.candidate?.assignedTo!!,
       positionId: this.candidate?.positionId!!,
+      isHired: this.candidate?.isHired!!,
     };
     this.candidateService
       .updateCandidate(this.candidateId, updatedCandidate)
@@ -410,6 +420,47 @@ export class CreateinterviewscoredocumentComponent
     if (this.unsavedChanges) {
       event.returnValue = true;
       event.preventDefault();
+    }
+  }
+
+  resetAddSectionTitleDialog(): void {
+    this.addSectionTitleForm.reset();
+    this.displayAddSectionTitleDialog = false;
+  }
+
+  saveNewSectionTitle(): void {
+    if (this.addSectionTitleForm.valid) {
+      const newSectionTitle: SectionTitle = {
+        title: this.addSectionTitleForm?.get('sectionTitle')?.value,
+      };
+      this.sectionTitleService
+        .createSectionTitle(newSectionTitle)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: (response) => {
+            this.sectionTitles.push(response);
+            this.sectionTitleItems.push({
+              label: response.title,
+              value: response.title,
+            });
+            const newSectionSelectItem: SelectItem = {
+              label: newSectionTitle.title,
+              value: newSectionTitle.title,
+            };
+            this.addSectionForm.patchValue({
+              sectionName: newSectionSelectItem,
+            });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'New section title created successfully!',
+            });
+            this.resetAddSectionTitleDialog();
+            this.initializeSectionTitles();
+          },
+          error: (error) =>
+            this.handleError(error, 'Failed to create new section title'),
+        });
     }
   }
 }

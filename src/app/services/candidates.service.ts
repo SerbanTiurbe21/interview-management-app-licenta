@@ -56,4 +56,9 @@ export class CandidatesService {
   getCandidateByDocumentId(documentId: string): Observable<Candidate> {
     return this.http.get<Candidate>(`${this.url}/document/${documentId}`);
   }
+
+  // can be accessed by HR and admin roles
+  hireCandidate(id: string, positionId: string): Observable<void> {
+    return this.http.put<void>(`${this.url}/${id}/hire/${positionId}`, {});
+  }
 }

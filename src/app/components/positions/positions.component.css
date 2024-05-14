@@ -1,5 +1,11 @@
 .inactive-position {
-  background-color: #f8f9fa; /* Light grey background */
-  color: #6c757d; /* Muted text color */
-  font-style: italic; /* Italicize text to indicate status */
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.closed-filled {
+  background-color: #e8f5e9;
+  color: #6c757d;
+  font-style: italic;
 }

@@ -13,6 +13,8 @@ import { GeneralinformationComponent } from '../generalinformation/generalinform
 import { UserService } from 'src/app/services/user.service';
 import { MessageService } from 'primeng/api';
 import { HttpErrorResponse } from '@angular/common/http';
+import { RoleService } from 'src/app/services/role.service';
+import { UpdatedUser } from 'src/app/interfaces/user/updateduser.model';
 
 @Component({
   selector: 'app-userprofile',
@@ -20,7 +22,8 @@ import { HttpErrorResponse } from '@angular/common/http';
   styleUrls: ['./userprofile.component.css'],
 })
 export class UserprofileComponent implements OnInit, OnDestroy {
-  loginForm: FormGroup;
+  originalFormData: any;
+  userProfileForm: FormGroup;
   private unsubscribe$ = new Subject<void>();
   userData: StoredUser | null = null;
 
@@ -29,9 +32,10 @@ export class UserprofileComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private dialogService: DialogService,
     private userService: UserService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private roleService: RoleService
   ) {
-    this.loginForm = this.fb.group({
+    this.userProfileForm = this.fb.group({
       email: new FormControl(''),
       firstName: new FormControl('', Validators.required),
       lastName: new FormControl('', Validators.required),
@@ -45,18 +49,34 @@ export class UserprofileComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.setUserData();
+  }
+
+  private setUserData(): void {
     this.authService
       .getActiveUser()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((user) => {
         this.userData = user;
-        this.loginForm.patchValue({
+        this.userProfileForm.patchValue({
           email: user?.email,
           firstName: user?.firstName,
           lastName: user?.lastName,
           role: user?.role,
         });
+        this.originalFormData = this.userProfileForm.value;
       });
+  }
+
+  isAdminOrHr(): boolean {
+    return this.roleService.isUserAdminOrHr();
+  }
+
+  formChanged(): boolean {
+    return (
+      JSON.stringify(this.originalFormData) !==
+      JSON.stringify(this.userProfileForm.value)
+    );
   }
 
   changePassword(): void {
@@ -72,8 +92,7 @@ export class UserprofileComponent implements OnInit, OnDestroy {
       }
     );
 
-    ref.onClose.pipe(takeUntil(this.unsubscribe$)).subscribe((result) => {
-      console.log('Dialog closed with result:', result);
+    ref.onClose.pipe(takeUntil(this.unsubscribe$)).subscribe(() => {
       if (this.userData?.id) {
         this.userService
           .changePassword(this.userData?.id)
@@ -114,5 +133,60 @@ export class UserprofileComponent implements OnInit, OnDestroy {
           });
       }
     });
+  }
+
+  saveProfile(): void {
+    console.log(this.userProfileForm.value);
+    if (this.userProfileForm.valid && this.formChanged()) {
+      if (this.userData?.id) {
+        const updatedUser: UpdatedUser = {
+          username: this.userData.username,
+          email: this.userProfileForm.value.email,
+          firstName: this.userProfileForm.value.firstName,
+          lastName: this.userProfileForm.value.lastName,
+          role: this.userProfileForm.value.role,
+        };
+        console.log(updatedUser);
+        this.userService
+          .updateUser(this.userData?.id, updatedUser)
+          .pipe(takeUntil(this.unsubscribe$))
+          .subscribe({
+            next: () => {
+              console.log('User updated!');
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'User updated!',
+              });
+              this.originalFormData = this.userProfileForm.value;
+            },
+            error: (error) => {
+              console.error('Error updating user:', error);
+              let detail: string = 'An error occurred. Please try again later.';
+              if (error instanceof HttpErrorResponse) {
+                switch (error.status) {
+                  case 400:
+                    detail = 'Invalid data. Please check the input data.';
+                    break;
+                  case 401:
+                    detail = 'You are not authorized to perform this action.';
+                    break;
+                  case 403:
+                    detail = 'You are forbidden from performing this action.';
+                    break;
+                  case 404:
+                    detail = 'The resource was not found.';
+                    break;
+                }
+              }
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Update failed',
+                detail: detail,
+              });
+            },
+          });
+      }
+    }
   }
 }

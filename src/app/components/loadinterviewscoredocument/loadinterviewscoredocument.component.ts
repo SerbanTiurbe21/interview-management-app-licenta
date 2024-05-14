@@ -31,6 +31,8 @@ import { SectiontitleService } from 'src/app/services/sectiontitle.service';
   styleUrls: ['./loadinterviewscoredocument.component.css'],
 })
 export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
+  addSectionTitleForm: FormGroup = new FormGroup({});
+  displayAddSectionTitleDialog: boolean = false;
   unsavedChanges: boolean = false;
   currentEditingSection: Section | null = null;
   displayEditSectionDialog: boolean = false;
@@ -40,7 +42,7 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
   addSectionForm: FormGroup = new FormGroup({});
   displayAddSectionDialog: boolean = false;
   sections: Section[] = [];
-  sectionTiles: SectionTitle[] = [];
+  sectionTitles: SectionTitle[] = [];
   sectionTitleItems: SelectItem[] = [];
   interviewScoreDocumentId: string = '';
   interviewScoreDocument: InterviewScoreDocument | null = null;
@@ -64,7 +66,8 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     private candidatesService: CandidatesService,
     private positionService: PositionsService,
     private authService: AuthService,
-    private roleService: RoleService
+    private roleService: RoleService,
+    private sectionTitleService: SectiontitleService
   ) {}
 
   ngOnInit(): void {
@@ -83,8 +86,9 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     this.loadCandidateData();
     this.initializeSpeedDialItems();
     this.initializeAddSectionForm();
-    this.loadSectionTiles();
+    this.loadsectionTitles();
     this.initializeEditSectionForm();
+    this.initializeAddSectionTitleForm();
   }
 
   private initializeEditSectionForm(): void {
@@ -92,6 +96,12 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
       sectionName: [{ value: '', disabled: true }],
       feedback: ['', Validators.required],
       score: ['', Validators.required],
+    });
+  }
+
+  private initializeAddSectionTitleForm(): void {
+    this.addSectionTitleForm = this.fb.group({
+      sectionTitle: ['', Validators.required],
     });
   }
 
@@ -169,12 +179,12 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
       });
   }
 
-  private loadSectionTiles(): void {
+  private loadsectionTitles(): void {
     this.sectionTitlesService
       .getAllSectionTitles()
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((sectionTitles) => {
-        this.sectionTiles = sectionTitles;
+        this.sectionTitles = sectionTitles;
         this.sectionTitleItems = sectionTitles.map((section) => {
           return {
             label: section.title,
@@ -192,17 +202,28 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     });
   }
 
-  filterSection(event: AutoCompleteCompleteEvent): void {
-    let filtered: SelectItem[] = [];
-    let query = event.query;
+  // filterSection(event: AutoCompleteCompleteEvent): void {
+  //   let filtered: SelectItem[] = [];
+  //   let query = event.query;
 
-    for (let i = 0; i < this.availableSectionTitles.length; i++) {
-      let section = this.availableSectionTitles[i];
-      if (section?.label?.toLowerCase().indexOf(query.toLowerCase()) == 0) {
-        filtered.push(section);
-      }
+  //   for (let i = 0; i < this.availableSectionTitles.length; i++) {
+  //     let section = this.availableSectionTitles[i];
+  //     if (section?.label?.toLowerCase().indexOf(query.toLowerCase()) == 0) {
+  //       filtered.push(section);
+  //     }
+  //   }
+  //   this.filteredSectionTitleItems = filtered;
+  // }
+
+  filterSection(event: AutoCompleteCompleteEvent): void {
+    this.filteredSectionTitleItems = this.sectionTitleItems.filter((section) =>
+      section?.label?.toLowerCase().includes(event.query.toLowerCase())
+    );
+    if (this.filteredSectionTitleItems.length === 0) {
+      setTimeout(() => {
+        this.displayAddSectionTitleDialog = true;
+      }, 1000);
     }
-    this.filteredSectionTitleItems = filtered;
   }
 
   fetchDocument() {
@@ -518,5 +539,59 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
       event.returnValue = true;
       event.preventDefault();
     }
+  }
+
+  resetAddSectionTitleDialog(): void {
+    this.addSectionTitleForm.reset();
+    this.displayAddSectionTitleDialog = false;
+  }
+
+  saveNewSectionTitle(): void {
+    if (this.addSectionTitleForm.valid) {
+      const newSectionTitle: SectionTitle = {
+        title: this.addSectionTitleForm?.get('sectionTitle')?.value,
+      };
+      this.sectionTitleService
+        .createSectionTitle(newSectionTitle)
+        .pipe(takeUntil(this.unsubscribe$))
+        .subscribe({
+          next: (response) => {
+            this.sectionTitles.push(response);
+            this.sectionTitleItems.push({
+              label: response.title,
+              value: response.title,
+            });
+            const newSectionSelectItem: SelectItem = {
+              label: newSectionTitle.title,
+              value: newSectionTitle.title,
+            };
+            this.addSectionForm.patchValue({
+              sectionName: newSectionSelectItem,
+            });
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'New section title created successfully!',
+            });
+            this.resetAddSectionTitleDialog();
+            this.loadsectionTitles();
+          },
+          error: (error) =>
+            this.handleError(error, 'Failed to create new section title'),
+        });
+    }
+  }
+
+  private handleError(error: any, context: string): void {
+    let detail = 'An error occurred. Please try again later.';
+    if (error instanceof HttpErrorResponse) {
+      console.error(error);
+      detail = error.error.message!! || detail;
+    }
+    this.showMessage('error', context, detail);
+  }
+
+  private showMessage(severity: string, summary: string, detail: string): void {
+    this.messageService.add({ severity, summary, detail });
   }
 }

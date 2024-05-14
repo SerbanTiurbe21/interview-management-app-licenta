@@ -42,7 +42,7 @@
           ></p-button>
           <p-overlayPanel #positionFilterDropdown [dismissable]="true">
             <p-dropdown
-              [options]="uniquePositions"
+              [options]="uniquePositionNames"
               (onChange)="onPositionFilter($event.value)"
               placeholder="Filter by position"
               [showClear]="true"
@@ -65,7 +65,7 @@
     </tr>
   </ng-template>
   <ng-template pTemplate="body" let-candidate>
-    <tr>
+    <tr [ngClass]="{ 'hired-candidate': candidate.hired === true }">
       <td class="text-center">{{ candidate.name }}</td>
       <td class="text-center">{{ candidate.email }}</td>
       <td class="text-center">{{ candidate.phoneNumber }}</td>
@@ -79,7 +79,7 @@
         {{ candidate.interviewDate | date : "mediumDate" }}
       </td>
       <td class="text-center">
-        {{ candidate.document }}
+        {{ candidate.finalScore || "N/A" }}
       </td>
       <td class="text-center">
         <p-button
@@ -111,6 +111,15 @@
           [rounded]="true"
           [text]="true"
           (click)="createInterviewScoreDocument(candidate)"
+        ></p-button>
+        <p-button
+          *ngIf="shouldShowHireButton(candidate)"
+          icon="pi pi-check"
+          label="Hire"
+          pTooltip="Hire Candidate"
+          [rounded]="true"
+          [text]="true"
+          (click)="confirmHire(candidate)"
         ></p-button>
       </td>
     </tr>

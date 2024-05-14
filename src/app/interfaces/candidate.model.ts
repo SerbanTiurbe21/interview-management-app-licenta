@@ -1,3 +1,5 @@
+import { InterviewDocumentStatus } from './interviewscoredocument/interviewdocumentstatus.model';
+
 export interface Candidate {
   id?: string;
   name: string;
@@ -8,4 +10,7 @@ export interface Candidate {
   documentId: string | null;
   assignedTo: string | null;
   positionId: string | null;
+  finalScore?: number;
+  isHired: boolean;
+  documentStatus?: InterviewDocumentStatus;
 }

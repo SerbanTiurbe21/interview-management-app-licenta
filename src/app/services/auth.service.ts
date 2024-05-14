@@ -16,6 +16,7 @@ export class AuthService implements OnDestroy {
     'http://localhost:9090/realms/springboot-microservice-realm/protocol/openid-connect';
   private client_id = 'microservice-auth';
   activeUser = new BehaviorSubject<StoredUser | null>(null);
+  user$ = new BehaviorSubject<StoredUser | null>(null);
   private tokenExpiretimer: any;
   private sessionCheckTimer: any;
   private unsubscribe$ = new Subject<void>();
@@ -136,13 +137,14 @@ export class AuthService implements OnDestroy {
       firstName: retrievedUser.firstName,
       lastName: retrievedUser.lastName,
       email: retrievedUser.email,
-      role: retrievedUser.role || '',
+      role: retrievedUser.role!!,
       token: authResponse.access_token,
       refreshToken: authResponse.refresh_token,
       tokenExpiration: expirationDate.getTime(),
     };
     localStorage.setItem('userData', JSON.stringify(storedUser));
     this.activeUser.next(storedUser);
+    this.user$.next(storedUser);
   }
 
   updateUserInformation(
@@ -191,6 +193,7 @@ export class AuthService implements OnDestroy {
 
   logout(): void {
     this.activeUser.next(null);
+    this.user$.next(null);
     this.router.navigate(['/login']);
     localStorage.removeItem('userData');
 
@@ -225,5 +228,9 @@ export class AuthService implements OnDestroy {
   isAuthenticated(): boolean {
     const user = this.activeUser.value;
     return !!user && new Date(user.tokenExpiration) > new Date();
+  }
+
+  watchUser(): Observable<StoredUser | null> {
+    return this.user$.asObservable();
   }
 }

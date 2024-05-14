@@ -9,7 +9,7 @@
         >
           <div class="p-divider-content"></div></div
       ></p-divider>
-      <form [formGroup]="loginForm">
+      <form [formGroup]="userProfileForm">
         <div class="flex gap-5 flex-column-reverse md:flex-row">
           <div class="flex-auto p-fluid">
             <div class="mb-4">
@@ -17,7 +17,7 @@
                 >Email</label
               >
               <div class="p-inputtext p-component p-element">
-                {{ loginForm.get("email")?.value }}
+                {{ userProfileForm.get("email")?.value }}
               </div>
             </div>
             <div class="mb-4">
@@ -37,17 +37,19 @@
                   userData?.role === 'HR' || userData?.role === 'DEVELOPER'
                 "
               >
-                {{ loginForm.get("firstName")?.value }}
+                {{ userProfileForm.get("firstName")?.value }}
               </div>
               <small
                 *ngIf="
-                  loginForm.get('firstName')?.invalid &&
-                  (loginForm.get('firstName')?.dirty ||
-                    loginForm.get('firstName')?.touched)
+                  userProfileForm.get('firstName')?.invalid &&
+                  (userProfileForm.get('firstName')?.dirty ||
+                    userProfileForm.get('firstName')?.touched)
                 "
                 class="block p-error"
               >
-                <div *ngIf="loginForm.get('firstName')?.errors?.['required']">
+                <div
+                  *ngIf="userProfileForm.get('firstName')?.errors?.['required']"
+                >
                   Last Name is required.
                 </div>
               </small>
@@ -69,17 +71,19 @@
                   userData?.role === 'HR' || userData?.role === 'DEVELOPER'
                 "
               >
-                {{ loginForm.get("lastName")?.value }}
+                {{ userProfileForm.get("lastName")?.value }}
               </div>
               <small
                 *ngIf="
-                  loginForm.get('lastName')?.invalid &&
-                  (loginForm.get('lastName')?.dirty ||
-                    loginForm.get('lastName')?.touched)
+                  userProfileForm.get('lastName')?.invalid &&
+                  (userProfileForm.get('lastName')?.dirty ||
+                    userProfileForm.get('lastName')?.touched)
                 "
                 class="block p-error"
               >
-                <div *ngIf="loginForm.get('lastName')?.errors?.['required']">
+                <div
+                  *ngIf="userProfileForm.get('lastName')?.errors?.['required']"
+                >
                   Last Name is required.
                 </div>
               </small>
@@ -89,7 +93,7 @@
                 >Role</label
               >
               <div class="p-inputtext p-component p-element">
-                {{ loginForm.get("role")?.value }}
+                {{ userProfileForm.get("role")?.value }}
               </div>
             </div>
             <div class="flex">
@@ -101,6 +105,21 @@
                 (click)="changePassword()"
               >
                 <span class="p-button-label">Change Password</span>
+              </button>
+              <button
+                *ngIf="isAdminOrHr()"
+                pbutton=""
+                pripple=""
+                label="Update"
+                class="p-element p-ripple w-auto p-button p-component mr-2 ml-2"
+                (click)="saveProfile()"
+                [disabled]="
+                  !formChanged() ||
+                  userProfileForm.invalid ||
+                  userProfileForm.pristine
+                "
+              >
+                <span class="p-button-label">Save Profile</span>
               </button>
             </div>
           </div>

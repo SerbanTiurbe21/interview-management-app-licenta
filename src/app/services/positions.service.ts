@@ -61,4 +61,9 @@ export class PositionsService {
       .set('status2', status2);
     return this.http.get<Position[]>(`${this.url}/statuses`, { params });
   }
+
+  // can be accessed by the HR, admin and the DEVELOPER role
+  getUniquePositionNames(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.url}/unique`);
+  }
 }
