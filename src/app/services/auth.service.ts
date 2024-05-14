@@ -162,6 +162,7 @@ export class AuthService implements OnDestroy {
     };
     localStorage.setItem('userData', JSON.stringify(updatedUser));
     this.activeUser.next(updatedUser);
+    this.user$.next(updatedUser);
   }
 
   autoLogin(): void {
@@ -173,6 +174,10 @@ export class AuthService implements OnDestroy {
     const nowMs = new Date().getTime();
     if (userData.token && expirationMs > nowMs) {
       this.activeUser.next({
+        ...userData,
+        tokenExpiration: expirationMs,
+      });
+      this.user$.next({
         ...userData,
         tokenExpiration: expirationMs,
       });
@@ -222,6 +227,7 @@ export class AuthService implements OnDestroy {
       localStorage.setItem('userData', JSON.stringify(updatedUser));
 
       this.activeUser.next(updatedUser);
+      this.user$.next(updatedUser);
     }
   }
 
