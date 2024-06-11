@@ -8,7 +8,10 @@ import {
   MessageService,
   SelectItem,
 } from 'primeng/api';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import {
+  AutoCompleteCompleteEvent,
+  AutoCompleteOnSelectEvent,
+} from 'primeng/autocomplete';
 import { Subject, takeUntil } from 'rxjs';
 import { Candidate } from 'src/app/interfaces/candidate.model';
 import { InterviewDocumentStatus } from 'src/app/interfaces/interviewscoredocument/interviewdocumentstatus.model';
@@ -37,7 +40,6 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
   currentEditingSection: Section | null = null;
   displayEditSectionDialog: boolean = false;
   editSectionForm: FormGroup = new FormGroup({});
-  userData: StoredUser | null = null;
   filteredSectionTitleItems: SelectItem[] = [];
   addSectionForm: FormGroup = new FormGroup({});
   displayAddSectionDialog: boolean = false;
@@ -54,6 +56,7 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
   completeInterviewScoreDocument: InterviewScoreDocument | null = null;
   availableSectionTitles: SelectItem[] = [];
   private unsubscribe$ = new Subject<void>();
+  activeUser: StoredUser | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -66,12 +69,11 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     private candidatesService: CandidatesService,
     private positionService: PositionsService,
     private authService: AuthService,
-    private roleService: RoleService,
     private sectionTitleService: SectiontitleService
   ) {}
 
   ngOnInit(): void {
-    this.getCurrentUser();
+    this.setupCurrentUser();
     this.activatedRoute.params.subscribe((params) => {
       this.interviewScoreDocumentId = params['id'];
       this.interviewScoreDocumentService
@@ -89,6 +91,16 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     this.loadsectionTitles();
     this.initializeEditSectionForm();
     this.initializeAddSectionTitleForm();
+  }
+
+  private setupCurrentUser(): void {
+    this.authService
+      .watchUser()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((user) => {
+        this.activeUser = user;
+        this.isAdminOrHr = user?.role === 'admin' || user?.role === 'HR';
+      });
   }
 
   private initializeEditSectionForm(): void {
@@ -111,14 +123,14 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe({
         next: (titles) => {
-          const userRole: string = this.userData?.role!!;
+          const userRole: string = this.activeUser?.role!;
           const existingTitles = this.interviewScoreDocument?.sections.map(
             (s) => s.title
           );
 
           const relevantTitles = titles.filter((title) => {
             if (
-              title.title.includes('General Feedback - DEV') &&
+              title.title === 'General Feedback - DEV' &&
               (userRole === 'admin' || userRole === 'HR')
             ) {
               return false;
@@ -126,7 +138,7 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
             return true;
           });
 
-          this.availableSectionTitles = relevantTitles
+          this.sectionTitleItems = relevantTitles
             .filter((title) => !existingTitles?.includes(title.title))
             .map((title) => ({ label: title.title, value: title.title }));
         },
@@ -146,16 +158,6 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.unsubscribe$))
       .subscribe((document) => {
         this.completeInterviewScoreDocument = document;
-      });
-  }
-
-  private getCurrentUser(): void {
-    this.authService
-      .getActiveUser()
-      .pipe(takeUntil(this.unsubscribe$))
-      .subscribe((user) => {
-        this.userData = user;
-        this.isAdminOrHr = this.roleService.isUserAdminOrHr();
       });
   }
 
@@ -191,6 +193,19 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
             value: section.title,
           };
         });
+        if (
+          this.activeUser?.role === 'admin' ||
+          this.activeUser?.role === 'HR'
+        ) {
+          this.sectionTitleItems = this.sectionTitleItems.filter(
+            (section) => section.label !== 'General Feedback - DEV'
+          );
+        }
+        if (this.activeUser?.role === 'DEVELOPER') {
+          this.sectionTitleItems = this.sectionTitleItems.filter(
+            (section) => section.label !== 'General Feedback - HR'
+          );
+        }
       });
   }
 
@@ -202,27 +217,26 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
     });
   }
 
-  // filterSection(event: AutoCompleteCompleteEvent): void {
-  //   let filtered: SelectItem[] = [];
-  //   let query = event.query;
-
-  //   for (let i = 0; i < this.availableSectionTitles.length; i++) {
-  //     let section = this.availableSectionTitles[i];
-  //     if (section?.label?.toLowerCase().indexOf(query.toLowerCase()) == 0) {
-  //       filtered.push(section);
-  //     }
-  //   }
-  //   this.filteredSectionTitleItems = filtered;
-  // }
-
   filterSection(event: AutoCompleteCompleteEvent): void {
     this.filteredSectionTitleItems = this.sectionTitleItems.filter((section) =>
       section?.label?.toLowerCase().includes(event.query.toLowerCase())
     );
-    if (this.filteredSectionTitleItems.length === 0) {
-      setTimeout(() => {
-        this.displayAddSectionTitleDialog = true;
-      }, 1000);
+    if (
+      this.filteredSectionTitleItems.length === 0 &&
+      event.query.trim() !== ''
+    ) {
+      this.filteredSectionTitleItems = [
+        {
+          label: 'Add new section...',
+          value: 'Add new section...',
+        },
+      ];
+    }
+  }
+
+  onSectionSelect(event: AutoCompleteOnSelectEvent): void {
+    if (event.value.label === 'Add new section...') {
+      this.displayAddSectionTitleDialog = true;
     }
   }
 
@@ -384,8 +398,8 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
 
   saveSection(): void {
     if (this.addSectionForm.valid) {
-      const interviewerName: string = `${this.userData?.firstName} ${this.userData?.lastName}`;
-      const interviewerRole: string = this.userData?.role || '';
+      const interviewerName: string = `${this.activeUser?.firstName} ${this.activeUser?.lastName}`;
+      const interviewerRole: string = this.activeUser?.role || '';
       const interviewers: InterviewerFeedback[] = [
         {
           name: interviewerName,
@@ -407,6 +421,35 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
   }
 
   saveSections(): void {
+    const userRole: string = this.activeUser?.role!!;
+    let requiredFeedbackTitle: string;
+
+    if (userRole === 'admin' || userRole === 'HR') {
+      requiredFeedbackTitle = 'General Feedback - HR';
+    } else {
+      requiredFeedbackTitle = 'General Feedback - DEV';
+    }
+
+    const hasRequiredGeneralFeedback: boolean = this.sections.some(
+      (section) => section.title === requiredFeedbackTitle
+    );
+
+    if (this.sections.length === 0) {
+      this.showMessage(
+        'error',
+        'Error',
+        'Please add at least one section to save the score document'
+      );
+      return;
+    } else if (!hasRequiredGeneralFeedback) {
+      this.showMessage(
+        'warn',
+        'Missing Section',
+        `Please add a "${requiredFeedbackTitle}" section before saving.`
+      );
+      return;
+    }
+
     const numberOfSections: number = this.sections.length;
     let totalScore: number = 0;
     this.sections.forEach((section) => {
@@ -459,7 +502,6 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
                 );
                 let detail = 'An error occurred. Please try again later.';
                 if (error instanceof HttpErrorResponse) {
-                  console.error('Error adding candidate:', error.message);
                   switch (error.status) {
                     case 400:
                       detail = error.error.message;
@@ -500,8 +542,8 @@ export class LoadinterviewscoredocumentComponent implements OnInit, OnDestroy {
 
   saveUpdatedSection(): void {
     if (this.editSectionForm.valid) {
-      const interviewerName: string = `${this.userData?.firstName} ${this.userData?.lastName}`;
-      const interviewerRole: string = this.userData?.role!!;
+      const interviewerName: string = `${this.activeUser?.firstName} ${this.activeUser?.lastName}`;
+      const interviewerRole: string = this.activeUser?.role!!;
       const interviewers: InterviewerFeedback[] = [
         {
           name: interviewerName,

@@ -126,6 +126,7 @@
           field="value"
           [forceSelection]="true"
           placeholder="Select section name"
+          (onSelect)="onSectionSelect($event)"
         ></p-autoComplete>
         <small
           *ngIf="

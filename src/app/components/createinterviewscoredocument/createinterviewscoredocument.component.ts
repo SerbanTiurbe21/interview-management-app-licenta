@@ -3,7 +3,10 @@ import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ConfirmationService, MessageService, SelectItem } from 'primeng/api';
-import { AutoCompleteCompleteEvent } from 'primeng/autocomplete';
+import {
+  AutoCompleteCompleteEvent,
+  AutoCompleteOnSelectEvent,
+} from 'primeng/autocomplete';
 import { Subject, takeUntil } from 'rxjs';
 import { Candidate } from 'src/app/interfaces/candidate.model';
 import { InterviewDocumentStatus } from 'src/app/interfaces/interviewscoredocument/interviewdocumentstatus.model';
@@ -46,6 +49,7 @@ export class CreateinterviewscoredocumentComponent
   displayEditSectionDialog: boolean = false;
   editSectionForm: FormGroup = new FormGroup({});
   documentLocked: boolean = false;
+  activeUser: StoredUser | null = null;
 
   constructor(
     private router: Router,
@@ -69,6 +73,16 @@ export class CreateinterviewscoredocumentComponent
     this.initializeEditSectionForm();
     this.initializeSectionTitles();
     this.initializeAddSectionTitleForm();
+    this.setupCurrentUser();
+  }
+
+  private setupCurrentUser(): void {
+    this.authService
+      .watchUser()
+      .pipe(takeUntil(this.unsubscribe$))
+      .subscribe((user) => {
+        this.activeUser = user;
+      });
   }
 
   ngOnDestroy(): void {
@@ -99,10 +113,17 @@ export class CreateinterviewscoredocumentComponent
       .subscribe((sectionTitles) => {
         this.sectionTitles = sectionTitles;
 
-        if (this.isAdminOrHr) {
-          this.sectionTitles.push({ title: 'General Feedback - HR' });
+        if (
+          this.activeUser?.role === 'admin' ||
+          this.activeUser?.role === 'HR'
+        ) {
+          this.sectionTitles = this.sectionTitles.filter(
+            (section) => section.title !== 'General Feedback - DEV'
+          );
         } else {
-          this.sectionTitles.push({ title: 'General Feedback - DEV' });
+          this.sectionTitles = this.sectionTitles.filter(
+            (section) => section.title !== 'General Feedback - HR'
+          );
         }
 
         this.sectionTitleItems = this.sectionTitles.map((sectionTitle) => ({
@@ -201,23 +222,33 @@ export class CreateinterviewscoredocumentComponent
         title: this.addSectionForm.get('sectionName')?.value?.value,
         interviewers: interviewers,
       };
-      console.log(section);
       this.sections.push(section);
       this.unsavedChanges = true;
-
       this.resetAddSectionDialog();
+      this.loadAvailableSections();
     }
   }
 
   filterSection(event: AutoCompleteCompleteEvent): void {
-    let query = event.query;
     this.filteredSectionTitleItems = this.sectionTitleItems.filter((section) =>
       section?.label?.toLowerCase().includes(event.query.toLowerCase())
     );
-    if (this.filteredSectionTitleItems.length === 0 || query.trim() !== '') {
-      setTimeout(() => {
-        this.displayAddSectionTitleDialog = true;
-      }, 2000);
+    if (
+      this.filteredSectionTitleItems.length === 0 &&
+      event.query.trim() !== ''
+    ) {
+      this.filteredSectionTitleItems = [
+        {
+          label: 'Add new section...',
+          value: 'Add new section...',
+        },
+      ];
+    }
+  }
+
+  onSectionSelect(event: AutoCompleteOnSelectEvent): void {
+    if (event.value.label === 'Add new section...') {
+      this.displayAddSectionTitleDialog = true;
     }
   }
 
@@ -231,7 +262,7 @@ export class CreateinterviewscoredocumentComponent
       requiredFeedbackTitle = 'General Feedback - DEV';
     }
 
-    const hasRequiredGeneralFeedback = this.sections.some(
+    const hasRequiredGeneralFeedback: boolean = this.sections.some(
       (section) => section.title === requiredFeedbackTitle
     );
 
@@ -378,6 +409,7 @@ export class CreateinterviewscoredocumentComponent
         });
       },
     });
+    this.loadAvailableSections();
   }
 
   saveUpdatedSection(): void {
@@ -462,5 +494,18 @@ export class CreateinterviewscoredocumentComponent
             this.handleError(error, 'Failed to create new section title'),
         });
     }
+  }
+
+  private loadAvailableSections(): void {
+    this.sectionTitles = this.sectionTitles.filter(
+      (section) => !this.sections.some((s) => s.title === section.title)
+      // &&
+      // section.title !== 'General Feedback - DEV' &&
+      // section.title !== 'General Feedback - HR'
+    );
+    this.sectionTitleItems = this.sectionTitles.map((sectionTitle) => ({
+      label: sectionTitle.title,
+      value: sectionTitle.title,
+    }));
   }
 }
