@@ -47,7 +47,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     if (currentTheme && currentTheme.includes('light')) {
       this.themeService.switchTheme('bootstrap4-dark-blue');
     }
-    this.setupMenu(this.storedUser);
+    // this.setupMenu(this.storedUser);
   }
 
   setupMenu(user: StoredUser | null): void {
@@ -134,16 +134,4 @@ export class HeaderComponent implements OnInit, OnDestroy {
       command: () => this.toggleTheme(),
     });
   }
-
-  // private addUserManagementItem(): void {
-  //   if (this.isAdminOrHr) {
-  //     this.items.push({
-  //       label: 'User Management',
-  //       icon: 'pi pi-fw pi-users',
-  //       command: () => {
-  //         this.router.navigate(['/users']);
-  //       },
-  //     });
-  //   }
-  // }
 }
