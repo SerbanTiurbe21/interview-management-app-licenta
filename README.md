@@ -2,9 +2,34 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.1.8.
 
+## Install npm - Node Package Manager
+To run the application, you will need Node.js and NPM (Node Package Manager). Node.js is the runtime environment, and NPM is the package manager that allows you to install and manage libraries and dependencies needed for the application.
+
+### Download and Installation
+
+Visit the Node.js download page to get the latest stable version.
+Select your operating system and follow the specific installation instructions provided.
+
+After installing Node.js, npm will also be installed automatically, as it comes packaged with Node.js.
+
+## Installing Dependencies
+Before you can run the application, you need to install its dependencies. This is done using the following command, which should be run in the root directory of the project (where the `package.json` file is located):
+
+`npm install`
+
 ## Development server
 
+To start the development server and launch the application:
+
+### Using Angular CLI
+
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+
+### Using npm
+
+Alternatively, you can use the npm shortcut configured in the `package.json` file:
+
+`npm start`
 
 ## Code scaffolding
 
